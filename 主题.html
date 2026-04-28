@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serial Port Assistant — 4 Styles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════ RESET & BASE ═══════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 15px; -webkit-font-smoothing: antialiased; }
+body { min-height: 100vh; background: #f0efed; }
+
+/* ═══════════════════════ STYLE SWITCHER ═══════════════════════ */
+.style-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; gap: 6px; justify-content: center;
+  padding: 14px 20px;
+  background: rgba(240,239,237,.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+.style-nav button {
+  font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+  font-size: .78rem; font-weight: 600;
+  padding: 7px 18px; border-radius: 100px;
+  border: 1.5px solid rgba(0,0,0,.1);
+  background: #fff; color: #666;
+  cursor: pointer; transition: all .25s ease;
+  letter-spacing: .02em;
+}
+.style-nav button:hover { border-color: rgba(0,0,0,.2); color: #333; }
+.style-nav button.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+
+.design { display: none; padding: 76px 24px 48px; }
+.design.active { display: block; }
+
+/* ═══════════════════════ STYLE A: Nordic Minimal ═══════════════════════ */
+/* 雪白 + 石墨灰 + 一点冰蓝点缀 */
+.style-a {
+  max-width: 960px; margin: 0 auto;
+  font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+  color: #2c2c2c;
+}
+.style-a .sa-header {
+  display: flex; align-items: baseline; gap: 16px;
+  margin-bottom: 36px; padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+.style-a .sa-header h1 {
+  font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif;
+  font-size: 1.6rem; font-weight: 600; letter-spacing: -.03em;
+  color: #1a1a1a;
+}
+.style-a .sa-header .sa-badge {
+  font-size: .65rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .1em; color: #fff;
+  background: #4a90d9; padding: 3px 10px; border-radius: 4px;
+}
+.style-a .sa-header .sa-status {
+  margin-left: auto; font-size: .78rem; color: #999;
+  display: flex; align-items: center; gap: 6px;
+}
+.style-a .sa-header .sa-status .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #ccc; transition: background .3s;
+}
+.style-a .sa-header .sa-status .dot.on { background: #4a90d9; }
+
+/* Config bar */
+.style-a .sa-config {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.style-a .sa-field {
+  display: flex; flex-direction: column; gap: 5px;
+}
+.style-a .sa-field label {
+  font-size: .65rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .08em; color: #999;
+}
+.style-a .sa-field select, .style-a .sa-field input {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .82rem; padding: 8px 12px;
+  border: 1.5px solid #e0e0e0; border-radius: 8px;
+  background: #fafafa; color: #333;
+  outline: none; transition: border-color .2s;
+  min-width: 110px;
+}
+.style-a .sa-field select:focus, .style-a .sa-field input:focus {
+  border-color: #4a90d9;
+}
+.style-a .sa-connect-btn {
+  align-self: flex-end;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .82rem; font-weight: 600;
+  padding: 9px 24px; border-radius: 8px;
+  border: none; cursor: pointer;
+  background: #4a90d9; color: #fff;
+  transition: all .2s;
+  letter-spacing: .01em;
+}
+.style-a .sa-connect-btn:hover { background: #3a7bc8; }
+.style-a .sa-connect-btn.disconnect { background: #d94a4a; }
+.style-a .sa-connect-btn.disconnect:hover { background: #c83a3a; }
+
+/* Terminal area */
+.style-a .sa-terminal {
+  background: #fafafa; border: 1.5px solid #e8e8e8;
+  border-radius: 12px; overflow: hidden;
+  margin-bottom: 16px;
+}
+.style-a .sa-term-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  background: #f5f5f5; border-bottom: 1px solid #e8e8e8;
+}
+.style-a .sa-term-toolbar .sa-tab {
+  font-size: .72rem; font-weight: 600;
+  padding: 4px 12px; border-radius: 6px;
+  background: transparent; border: none; cursor: pointer;
+  color: #888; transition: all .2s;
+}
+.style-a .sa-term-toolbar .sa-tab.active {
+  background: #fff; color: #333;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.style-a .sa-term-toolbar .sa-actions {
+  margin-left: auto; display: flex; gap: 6px;
+}
+.style-a .sa-term-toolbar .sa-act-btn {
+  font-size: .68rem; font-weight: 500;
+  padding: 4px 10px; border-radius: 6px;
+  background: transparent; border: 1px solid #ddd;
+  cursor: pointer; color: #888; transition: all .2s;
+}
+.style-a .sa-term-toolbar .sa-act-btn:hover {
+  border-color: #4a90d9; color: #4a90d9;
+}
+.style-a .sa-term-body {
+  height: 320px; padding: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .78rem; line-height: 1.7;
+  color: #444; overflow-y: auto;
+}
+.style-a .sa-term-body .line { display: flex; gap: 12px; }
+.style-a .sa-term-body .ts { color: #bbb; user-select: none; min-width: 80px; }
+.style-a .sa-term-body .dir-rx { color: #4a90d9; }
+.style-a .sa-term-body .dir-tx { color: #d98c4a; }
+.style-a .sa-term-body .hex { color: #7a7a7a; }
+
+/* Send area */
+.style-a .sa-send {
+  display: flex; gap: 10px;
+}
+.style-a .sa-send input {
+  flex: 1; font-family: 'JetBrains Mono', monospace;
+  font-size: .82rem; padding: 12px 16px;
+  border: 1.5px solid #e0e0e0; border-radius: 10px;
+  background: #fff; outline: none; transition: border-color .2s;
+}
+.style-a .sa-send input:focus { border-color: #4a90d9; }
+.style-a .sa-send button {
+  font-family: 'DM Sans', sans-serif;
+  font-size: .82rem; font-weight: 600;
+  padding: 12px 28px; border-radius: 10px;
+  border: none; cursor: pointer;
+  background: #1a1a1a; color: #fff;
+  transition: background .2s;
+}
+.style-a .sa-send button:hover { background: #333; }
+
+/* Stats bar */
+.style-a .sa-stats {
+  display: flex; gap: 24px; margin-top: 16px;
+  font-size: .7rem; color: #bbb;
+  font-family: 'JetBrains Mono', monospace;
+}
+.style-a .sa-stats span { display: flex; align-items: center; gap: 5px; }
+.style-a .sa-stats .val { color: #888; font-weight: 500; }
+
+
+/* ═══════════════════════ STYLE B: Warm Industrial ═══════════════════════ */
+/* 暖白 + 深棕 + 琥珀/铜色标识 */
+.style-b {
+  max-width: 960px; margin: 0 auto;
+  font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+  color: #3a3028;
+  background: #f7f4f0; border-radius: 20px;
+  padding: 36px; border: 1px solid #e8e0d6;
+}
+.style-b .sb-header {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 32px;
+}
+.style-b .sb-header .sb-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, #d4a574, #c08040);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: .9rem; font-weight: 700;
+}
+.style-b .sb-header h1 {
+  font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+  font-size: 1.35rem; font-weight: 600; color: #2a2018;
+}
+.style-b .sb-header .sb-ver {
+  margin-left: auto; font-size: .7rem; color: #b8a898;
+  font-family: 'JetBrains Mono', monospace;
+  background: #efe8de; padding: 3px 10px; border-radius: 6px;
+}
+
+/* Config grid */
+.style-b .sb-config-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 12px; margin-bottom: 20px;
+}
+.style-b .sb-field {
+  display: flex; flex-direction: column; gap: 5px;
+}
+.style-b .sb-field label {
+  font-size: .62rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .1em; color: #b8a898;
+}
+.style-b .sb-field select, .style-b .sb-field input {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .78rem; padding: 9px 11px;
+  border: 1.5px solid #e0d8ce; border-radius: 8px;
+  background: #fffcf8; color: #3a3028;
+  outline: none; transition: border-color .2s;
+  appearance: none; -webkit-appearance: none;
+}
+.style-b .sb-field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b8a898'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+.style-b .sb-field select:focus, .style-b .sb-field input:focus { border-color: #c08040; }
+
+/* Terminal */
+.style-b .sb-terminal {
+  background: #2a2018; border-radius: 14px;
+  overflow: hidden; margin-bottom: 16px;
+  position: relative;
+}
+.style-b .sb-term-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 18px;
+  background: #1e1610; border-bottom: 1px solid #3a3028;
+}
+.style-b .sb-term-header .sb-dot-group {
+  display: flex; gap: 6px;
+}
+.style-b .sb-term-header .sb-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #3a3028;
+}
+.style-b .sb-term-header .sb-dot:nth-child(1) { background: #d9735a; }
+.style-b .sb-term-header .sb-dot:nth-child(2) { background: #d4a574; }
+.style-b .sb-term-header .sb-dot:nth-child(3) { background: #7ab87a; }
+.style-b .sb-term-header .sb-title {
+  font-size: .7rem; color: #8a7a68;
+  font-family: 'JetBrains Mono', monospace;
+}
+.style-b .sb-term-body {
+  height: 300px; padding: 16px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .76rem; line-height: 1.8;
+  overflow-y: auto;
+}
+.style-b .sb-term-body .line { display: flex; gap: 10px; }
+.style-b .sb-term-body .ts { color: #5a4a38; min-width: 72px; }
+.style-b .sb-term-body .dir-rx { color: #d4a574; }
+.style-b .sb-term-body .dir-tx { color: #7ab87a; }
+.style-b .sb-term-body .data { color: #c8b8a0; }
+.style-b .sb-term-body .hex { color: #6a5a48; }
+
+/* Send */
+.style-b .sb-send-row {
+  display: flex; gap: 10px; align-items: center;
+}
+.style-b .sb-send-row input {
+  flex: 1; font-family: 'JetBrains Mono', monospace;
+  font-size: .8rem; padding: 12px 16px;
+  border: 1.5px solid #e0d8ce; border-radius: 10px;
+  background: #fffcf8; outline: none; transition: border-color .2s;
+}
+.style-b .sb-send-row input:focus { border-color: #c08040; }
+.style-b .sb-send-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: .8rem; font-weight: 600;
+  padding: 12px 28px; border-radius: 10px;
+  border: none; cursor: pointer;
+  background: linear-gradient(135deg, #d4a574, #c08040);
+  color: #fff; transition: opacity .2s;
+}
+.style-b .sb-send-btn:hover { opacity: .85; }
+.style-b .sb-toggle-row {
+  display: flex; gap: 8px; margin-top: 12px;
+}
+.style-b .sb-toggle {
+  font-size: .68rem; font-weight: 600;
+  padding: 5px 14px; border-radius: 100px;
+  border: 1.5px solid #e0d8ce; background: transparent;
+  color: #a89880; cursor: pointer; transition: all .2s;
+}
+.style-b .sb-toggle.active {
+  background: #c08040; color: #fff; border-color: #c08040;
+}
+
+
+/* ═══════════════════════ STYLE C: Mint Garden ═══════════════════════ */
+/* 薄荷绿白 + 翠绿标识 + 圆润活泼 */
+.style-c {
+  max-width: 960px; margin: 0 auto;
+  font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+  color: #2a4a3a;
+}
+.style-c .sc-wrapper {
+  background: #f2f9f5; border-radius: 24px;
+  padding: 32px; border: 1px solid #d8ede2;
+}
+.style-c .sc-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 28px;
+}
+.style-c .sc-header .sc-logo {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: linear-gradient(135deg, #4ac08a, #2d9a6a);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+.style-c .sc-header h1 {
+  font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif;
+  font-size: 1.4rem; font-weight: 700; color: #1a3a2a;
+}
+.style-c .sc-header .sc-conn-indicator {
+  margin-left: auto; display: flex; align-items: center; gap: 8px;
+  font-size: .75rem; font-weight: 600; color: #8ab8a0;
+}
+.style-c .sc-header .sc-conn-indicator .pulse {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #ccc;
+}
+.style-c .sc-header .sc-conn-indicator .pulse.on {
+  background: #4ac08a;
+  animation: pulse-glow 2s ease infinite;
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74,192,138,.4); }
+  50% { box-shadow: 0 0 0 6px rgba(74,192,138,0); }
+}
+
+/* Config pills */
+.style-c .sc-config {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.style-c .sc-pill-group {
+  display: flex; flex-direction: column; gap: 5px;
+}
+.style-c .sc-pill-group label {
+  font-size: .6rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: #8ab8a0;
+}
+.style-c .sc-pill-group select {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .78rem; padding: 9px 32px 9px 12px;
+  border: 2px solid #d8ede2; border-radius: 12px;
+  background: #fff; color: #2a4a3a;
+  outline: none; transition: all .2s;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238ab8a0'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.style-c .sc-pill-group select:focus { border-color: #4ac08a; }
+
+/* Connect button */
+.style-c .sc-connect-row {
+  display: flex; gap: 10px; margin-bottom: 20px;
+}
+.style-c .sc-connect-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: .82rem; font-weight: 600;
+  padding: 11px 32px; border-radius: 14px;
+  border: none; cursor: pointer;
+  background: linear-gradient(135deg, #4ac08a, #2d9a6a);
+  color: #fff; transition: all .25s;
+  display: flex; align-items: center; gap: 8px;
+}
+.style-c .sc-connect-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(74,192,138,.3); }
+.style-c .sc-connect-btn.off { background: #ddd; color: #999; box-shadow: none; transform: none; }
+
+/* Terminal */
+.style-c .sc-terminal {
+  background: #fff; border-radius: 16px;
+  border: 2px solid #d8ede2; overflow: hidden;
+  margin-bottom: 16px;
+}
+.style-c .sc-term-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 16px;
+  background: #f2f9f5; border-bottom: 1px solid #d8ede2;
+}
+.style-c .sc-term-bar .sc-tbtn {
+  font-size: .7rem; font-weight: 600;
+  padding: 5px 14px; border-radius: 10px;
+  border: none; cursor: pointer;
+  background: transparent; color: #8ab8a0; transition: all .2s;
+}
+.style-c .sc-term-bar .sc-tbtn.active {
+  background: #4ac08a; color: #fff;
+}
+.style-c .sc-term-bar .sc-tbtn:hover:not(.active) { background: #e0f2e8; }
+.style-c .sc-term-bar .sc-spacer { flex: 1; }
+.style-c .sc-term-bar .sc-icon-btn {
+  width: 28px; height: 28px; border-radius: 8px;
+  border: 1px solid #d8ede2; background: #fff;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; color: #8ab8a0; transition: all .2s;
+}
+.style-c .sc-term-bar .sc-icon-btn:hover { border-color: #4ac08a; color: #4ac08a; }
+.style-c .sc-term-body {
+  height: 280px; padding: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .76rem; line-height: 1.8;
+  color: #4a6a5a; overflow-y: auto;
+}
+.style-c .sc-term-body .line { display: flex; gap: 10px; }
+.style-c .sc-term-body .ts { color: #b8d8c8; min-width: 72px; }
+.style-c .sc-term-body .dir-rx { color: #4ac08a; font-weight: 600; }
+.style-c .sc-term-body .dir-tx { color: #c0a04a; font-weight: 600; }
+.style-c .sc-term-body .data { color: #3a5a4a; }
+
+/* Send */
+.style-c .sc-send {
+  display: flex; gap: 10px;
+}
+.style-c .sc-send input {
+  flex: 1; font-family: 'JetBrains Mono', monospace;
+  font-size: .82rem; padding: 13px 18px;
+  border: 2px solid #d8ede2; border-radius: 14px;
+  background: #fff; outline: none; transition: border-color .2s;
+}
+.style-c .sc-send input:focus { border-color: #4ac08a; }
+.style-c .sc-send button {
+  font-family: 'DM Sans', sans-serif;
+  font-size: .82rem; font-weight: 600;
+  padding: 13px 28px; border-radius: 14px;
+  border: none; cursor: pointer;
+  background: #1a3a2a; color: #fff;
+  transition: all .2s;
+}
+.style-c .sc-send button:hover { background: #2a4a3a; }
+
+/* Stats chips */
+.style-c .sc-stats {
+  display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;
+}
+.style-c .sc-stat-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .65rem; font-weight: 500;
+  padding: 5px 12px; border-radius: 100px;
+  background: #e0f2e8; color: #4a8a6a;
+}
+.style-c .sc-stat-chip .val { color: #2a6a4a; font-weight: 700; }
+
+
+/* ═══════════════════════ STYLE D: Sharp Graphite ═══════════════════════ */
+/* 浅灰白 + 深石墨 + 青柠/珊瑚双色标识 */
+.style-d {
+  max-width: 960px; margin: 0 auto;
+  font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif;
+  color: #2a2a2e;
+}
+.style-d .sd-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 16px;
+}
+.style-d .sd-sidebar {
+  background: #f6f6f7; border-radius: 16px;
+  padding: 24px 20px; border: 1px solid #eaeaec;
+}
+.style-d .sd-sidebar h2 {
+  font-size: .7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .12em; color: #aaa; margin-bottom: 16px;
+}
+.style-d .sd-field {
+  margin-bottom: 14px;
+}
+.style-d .sd-field label {
+  display: block; font-size: .68rem; font-weight: 600;
+  color: #888; margin-bottom: 5px;
+}
+.style-d .sd-field select, .sd-field input[type="text"] {
+  width: 100%; font-family: 'JetBrains Mono', monospace;
+  font-size: .78rem; padding: 9px 10px;
+  border: 1.5px solid #e0e0e2; border-radius: 8px;
+  background: #fff; color: #2a2a2e;
+  outline: none; transition: border-color .2s;
+}
+.style-d .sd-field select:focus, .style-d .sd-field input:focus {
+  border-color: #a0c85a;
+}
+.style-d .sd-connect-btn {
+  width: 100%; font-family: 'Space Grotesk', sans-serif;
+  font-size: .8rem; font-weight: 600;
+  padding: 11px; border-radius: 10px;
+  border: none; cursor: pointer;
+  background: #2a2a2e; color: #fff;
+  transition: all .2s; margin-top: 6px;
+}
+.style-d .sd-connect-btn:hover { background: #444; }
+.style-d .sd-connect-btn.on { background: #e85a5a; }
+
+/* Right panel */
+.style-d .sd-main {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.style-d .sd-header-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; background: #f6f6f7;
+  border-radius: 14px; border: 1px solid #eaeaec;
+}
+.style-d .sd-header-bar h1 {
+  font-size: 1.1rem; font-weight: 700; color: #1a1a1e;
+}
+.style-d .sd-header-bar .sd-live-badge {
+  margin-left: auto; font-size: .65rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em;
+  padding: 4px 12px; border-radius: 6px;
+  background: #eee; color: #aaa;
+}
+.style-d .sd-header-bar .sd-live-badge.on {
+  background: #e8f8e0; color: #5a9a3a;
+}
+
+/* Terminal */
+.style-d .sd-terminal {
+  background: #fff; border-radius: 14px;
+  border: 1px solid #eaeaec; overflow: hidden;
+  flex: 1;
+}
+.style-d .sd-term-tabs {
+  display: flex; border-bottom: 1px solid #eaeaec;
+  padding: 0 16px;
+}
+.style-d .sd-term-tabs button {
+  font-size: .72rem; font-weight: 600;
+  padding: 10px 16px; border: none;
+  background: transparent; cursor: pointer;
+  color: #aaa; border-bottom: 2px solid transparent;
+  transition: all .2s;
+}
+.style-d .sd-term-tabs button.active {
+  color: #2a2a2e; border-bottom-color: #a0c85a;
+}
+.style-d .sd-term-body {
+  height: 340px; padding: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .76rem; line-height: 1.8;
+  overflow-y: auto;
+}
+.style-d .sd-term-body .line { display: flex; gap: 10px; }
+.style-d .sd-term-body .ts { color: #ccc; min-width: 72px; }
+.style-d .sd-term-body .dir-rx { color: #a0c85a; font-weight: 600; }
+.style-d .sd-term-body .dir-tx { color: #e88a5a; font-weight: 600; }
+.style-d .sd-term-body .data { color: #555; }
+
+/* Send */
+.style-d .sd-send-bar {
+  display: flex; gap: 10px;
+}
+.style-d .sd-send-bar input {
+  flex: 1; font-family: 'JetBrains Mono', monospace;
+  font-size: .82rem; padding: 13px 16px;
+  border: 1.5px solid #e0e0e2; border-radius: 12px;
+  background: #f6f6f7; outline: none; transition: border-color .2s;
+}
+.style-d .sd-send-bar input:focus { border-color: #a0c85a; background: #fff; }
+.style-d .sd-send-btn {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: .82rem; font-weight: 600;
+  padding: 13px 32px; border-radius: 12px;
+  border: none; cursor: pointer;
+  background: #a0c85a; color: #1a1a1e;
+  transition: all .2s;
+}
+.style-d .sd-send-btn:hover { background: #8ab84a; }
+
+/* Bottom stats */
+.style-d .sd-bottom-bar {
+  display: flex; gap: 16px; align-items: center;
+  padding: 10px 16px; background: #f6f6f7;
+  border-radius: 10px; border: 1px solid #eaeaec;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .65rem; color: #aaa;
+}
+.style-d .sd-bottom-bar .val { color: #888; font-weight: 600; }
+
+/* ═══════════════════════ SCROLLBAR ═══════════════════════ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.2); }
+</style>
+</head>
+<body>
+
+<!-- STYLE SWITCHER -->
+<nav class="style-nav">
+  <button class="active" onclick="switchStyle('a')">A · 北欧极简</button>
+  <button onclick="switchStyle('b')">B · 暖棕工业</button>
+  <button onclick="switchStyle('c')">C · 薄荷花园</button>
+  <button onclick="switchStyle('d')">D · 石墨锐利</button>
+</nav>
+
+<!-- ═══════════════════════ STYLE A ═══════════════════════ -->
+<div class="design style-a active" id="style-a">
+  <div class="sa-header">
+    <h1>Serial Monitor</h1>
+    <span class="sa-badge">v2.1</span>
+    <span class="sa-status"><span class="dot" id="a-dot"></span> 未连接</span>
+  </div>
+
+  <div class="sa-config">
+    <div class="sa-field">
+      <label>端口</label>
+      <select>
+        <option>/dev/ttyUSB0</option>
+        <option>/dev/ttyACM0</option>
+        <option>COM3</option>
+        <option>COM7</option>
+      </select>
+    </div>
+    <div class="sa-field">
+      <label>波特率</label>
+      <select>
+        <option>115200</option>
+        <option>9600</option>
+        <option>57600</option>
+        <option>256000</option>
+        <option>921600</option>
+      </select>
+    </div>
+    <div class="sa-field">
+      <label>数据位</label>
+      <select><option>8</option><option>7</option><option>6</option><option>5</option></select>
+    </div>
+    <div class="sa-field">
+      <label>停止位</label>
+      <select><option>1</option><option>1.5</option><option>2</option></select>
+    </div>
+    <div class="sa-field">
+      <label>校验</label>
+      <select><option>None</option><option>Even</option><option>Odd</option><option>Mark</option><option>Space</option></select>
+    </div>
+    <button class="sa-connect-btn" onclick="toggleConn(this,'a')">连接</button>
+  </div>
+
+  <div class="sa-terminal">
+    <div class="sa-term-toolbar">
+      <button class="sa-tab active">接收</button>
+      <button class="sa-tab">发送</button>
+      <button class="sa-tab">HEX</button>
+      <div class="sa-actions">
+        <button class="sa-act-btn">自动滚屏</button>
+        <button class="sa-act-btn">时间戳</button>
+        <button class="sa-act-btn">清空</button>
+        <button class="sa-act-btn">导出</button>
+      </div>
+    </div>
+    <div class="sa-term-body" id="a-term">
+      <div class="line"><span class="ts">14:32:01</span><span class="dir-rx">[RX]</span><span>AT+VERSION?</span></div>
+      <div class="line"><span class="ts">14:32:01</span><span class="dir-tx">[TX]</span><span>+VERSION:2.1.0-rc1</span></div>
+      <div class="line"><span class="ts">14:32:02</span><span class="dir-rx">[RX]</span><span>AT+STATUS</span></div>
+      <div class="line"><span class="ts">14:32:02</span><span class="dir-tx">[TX]</span><span>+STATUS:READY,FW=2.1.0,BUILD=20260410</span></div>
+      <div class="line"><span class="ts">14:32:05</span><span class="dir-rx">[RX]</span><span class="hex">48 65 6C 6C 6F 20 57 6F 72 6C 64</span></div>
+      <div class="line"><span class="ts">14:32:06</span><span class="dir-tx">[TX]</span><span>ACK 0x06</span></div>
+      <div class="line"><span class="ts">14:32:08</span><span class="dir-rx">[RX]</span><span>AT+SEND=14,Hello Serial!</span></div>
+      <div class="line"><span class="ts">14:32:08</span><span class="dir-tx">[TX]</span><span>+SEND:OK</span></div>
+    </div>
+  </div>
+
+  <div class="sa-send">
+    <input type="text" placeholder="输入要发送的数据…">
+    <button>发送 ↵</button>
+  </div>
+
+  <div class="sa-stats">
+    <span>RX: <span class="val">1,284 B</span></span>
+    <span>TX: <span class="val">438 B</span></span>
+    <span>速率: <span class="val">115200 bps</span></span>
+    <span>帧错误: <span class="val">0</span></span>
+    <span>运行: <span class="val">00:12:34</span></span>
+  </div>
+</div>
+
+<!-- ═══════════════════════ STYLE B ═══════════════════════ -->
+<div class="design style-b" id="style-b">
+  <div class="sb-header">
+    <div class="sb-icon">⚡</div>
+    <h1>串口调试终端</h1>
+    <span class="sb-ver">v3.0.2-beta</span>
+  </div>
+
+  <div class="sb-config-grid">
+    <div class="sb-field">
+      <label>串口</label>
+      <select>
+        <option>COM3 — USB-SERIAL</option>
+        <option>COM7 — CH340</option>
+        <option>/dev/ttyUSB0</option>
+      </select>
+    </div>
+    <div class="sb-field">
+      <label>波特率</label>
+      <select>
+        <option>115200</option><option>9600</option><option>38400</option><option>256000</option>
+      </select>
+    </div>
+    <div class="sb-field">
+      <label>数据位</label>
+      <select><option>8</option><option>7</option></select>
+    </div>
+    <div class="sb-field">
+      <label>停止位</label>
+      <select><option>1</option><option>2</option></select>
+    </div>
+    <div class="sb-field">
+      <label>流控</label>
+      <select><option>None</option><option>RTS/CTS</option><option>XON/XOFF</option></select>
+    </div>
+  </div>
+
+  <div class="sb-terminal">
+    <div class="sb-term-header">
+      <div class="sb-dot-group"><span class="sb-dot"></span><span class="sb-dot"></span><span class="sb-dot"></span></div>
+      <span class="sb-title">serial-monitor — /dev/ttyUSB0 @ 115200</span>
+    </div>
+    <div class="sb-term-body" id="b-term">
+      <div class="line"><span class="ts">[14:32:01]</span><span class="dir-rx">◄ RX</span><span class="data">AT+VERSION?</span></div>
+      <div class="line"><span class="ts">[14:32:01]</span><span class="dir-tx">► TX</span><span class="data">+VERSION:3.0.2-beta</span></div>
+      <div class="line"><span class="ts">[14:32:03]</span><span class="dir-rx">◄ RX</span><span class="data">AT+GPIO=13,1</span></div>
+      <div class="line"><span class="ts">[14:32:03]</span><span class="dir-tx">► TX</span><span class="data">+GPIO:OK</span></div>
+      <div class="line"><span class="ts">[14:32:04]</span><span class="dir-rx">◄ RX</span><span class="data">AT+ADC=0</span></div>
+      <div class="line"><span class="ts">[14:32:04]</span><span class="dir-tx">► TX</span><span class="data">+ADC:3.28V (4095)</span></div>
+      <div class="line"><span class="ts">[14:32:05]</span><span class="dir-rx">◄ RX</span><span class="hex">A5 5A 03 00 FF FC 4E</span></div>
+      <div class="line"><span class="ts">[14:32:06]</span><span class="dir-tx">► TX</span><span class="data">+SEND:OK,LEN=14</span></div>
+    </div>
+  </div>
+
+  <div class="sb-send-row">
+    <input type="text" placeholder="AT+COMMAND 或 HEX (0A 0D …)">
+    <button class="sb-send-btn">发送</button>
+  </div>
+  <div class="sb-toggle-row">
+    <button class="sb-toggle active">HEX 发送</button>
+    <button class="sb-toggle">HEX 显示</button>
+    <button class="sb-toggle">自动换行</button>
+    <button class="sb-toggle">时间戳</button>
+    <button class="sb-toggle active">DTR</button>
+    <button class="sb-toggle">RTS</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════ STYLE C ═══════════════════════ -->
+<div class="design style-c" id="style-c">
+  <div class="sc-wrapper">
+    <div class="sc-header">
+      <div class="sc-logo">📡</div>
+      <h1>PortPal</h1>
+      <div class="sc-conn-indicator">
+        <span class="pulse" id="c-pulse"></span>
+        <span id="c-status">空闲</span>
+      </div>
+    </div>
+
+    <div class="sc-config">
+      <div class="sc-pill-group">
+        <label>端口</label>
+        <select>
+          <option>/dev/ttyUSB0</option>
+          <option>/dev/ttyACM0</option>
+          <option>COM3</option>
+        </select>
+      </div>
+      <div class="sc-pill-group">
+        <label>波特率</label>
+        <select>
+          <option>115200</option><option>9600</option><option>57600</option><option>256000</option>
+        </select>
+      </div>
+      <div class="sc-pill-group">
+        <label>数据位</label>
+        <select><option>8</option><option>7</option></select>
+      </div>
+      <div class="sc-pill-group">
+        <label>校验</label>
+        <select><option>None</option><option>Even</option><option>Odd</option></select>
+      </div>
+      <div class="sc-pill-group">
+        <label>停止位</label>
+        <select><option>1</option><option>2</option></select>
+      </div>
+    </div>
+
+    <div class="sc-connect-row">
+      <button class="sc-connect-btn" onclick="toggleConn(this,'c')">🔌 连接设备</button>
+    </div>
+
+    <div class="sc-terminal">
+      <div class="sc-term-bar">
+        <button class="sc-tbtn active">全部</button>
+        <button class="sc-tbtn">仅 RX</button>
+        <button class="sc-tbtn">仅 TX</button>
+        <button class="sc-tbtn">HEX</button>
+        <span class="sc-spacer"></span>
+        <button class="sc-icon-btn" title="时间戳">⏱</button>
+        <button class="sc-icon-btn" title="清空">⌫</button>
+        <button class="sc-icon-btn" title="导出">↓</button>
+      </div>
+      <div class="sc-term-body" id="c-term">
+        <div class="line"><span class="ts">14:32:00</span><span class="dir-rx">[收]</span><span class="data">设备初始化完成</span></div>
+        <div class="line"><span class="ts">14:32:01</span><span class="dir-tx">[发]</span><span class="data">AT</span></div>
+        <div class="line"><span class="ts">14:32:01</span><span class="dir-rx">[收]</span><span class="data">OK</span></div>
+        <div class="line"><span class="ts">14:32:03</span><span class="dir-tx">[发]</span><span class="data">AT+CWLAP</span></div>
+        <div class="line"><span class="ts">14:32:04</span><span class="dir-rx">[收]</span><span class="data">+CWLAP:(3,"MyWiFi",-67,"aa:bb:cc:dd:ee:ff",1)</span></div>
+        <div class="line"><span class="ts">14:32:04</span><span class="dir-rx">[收]</span><span class="data">+CWLAP:(4,"Office-5G",-52,"11:22:33:44:55:66",36)</span></div>
+        <div class="line"><span class="ts">14:32:05</span><span class="dir-tx">[发]</span><span class="data">AT+CWJAP="MyWiFi","pass1234"</span></div>
+        <div class="line"><span class="ts">14:32:07</span><span class="dir-rx">[收]</span><span class="data">WIFI CONNECTED</span></div>
+        <div class="line"><span class="ts">14:32:08</span><span class="dir-rx">[收]</span><span class="data">WIFI GOT IP</span></div>
+      </div>
+    </div>
+
+    <div class="sc-send">
+      <input type="text" placeholder="在此输入 AT 指令或文本…">
+      <button>发送 ⏎</button>
+    </div>
+
+    <div class="sc-stats">
+      <span class="sc-stat-chip">📥 RX <span class="val">2.4 KB</span></span>
+      <span class="sc-stat-chip">📤 TX <span class="val">0.8 KB</span></span>
+      <span class="sc-stat-chip">⚡ <span class="val">115200</span> bps</span>
+      <span class="sc-stat-chip">✅ 无错误</span>
+      <span class="sc-stat-chip">🕐 <span class="val">00:08:12</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ STYLE D ═══════════════════════ -->
+<div class="design style-d" id="style-d">
+  <div class="sd-layout">
+    <div class="sd-sidebar">
+      <h2>连接设置</h2>
+      <div class="sd-field">
+        <label>串口</label>
+        <select>
+          <option>/dev/ttyUSB0</option>
+          <option>/dev/ttyACM1</option>
+          <option>COM5</option>
+        </select>
+      </div>
+      <div class="sd-field">
+        <label>波特率</label>
+        <select>
+          <option>115200</option><option>9600</option><option>38400</option><option>256000</option><option>921600</option>
+        </select>
+      </div>
+      <div class="sd-field">
+        <label>数据位</label>
+        <select><option>8</option><option>7</option><option>6</option><option>5</option></select>
+      </div>
+      <div class="sd-field">
+        <label>停止位</label>
+        <select><option>1</option><option>1.5</option><option>2</option></select>
+      </div>
+      <div class="sd-field">
+        <label>校验位</label>
+        <select><option>None</option><option>Even</option><option>Odd</option></select>
+      </div>
+      <div class="sd-field">
+        <label>流控</label>
+        <select><option>None</option><option>RTS/CTS</option><option>DTR/DSR</option></select>
+      </div>
+      <button class="sd-connect-btn" onclick="toggleConn(this,'d')">打开串口</button>
+    </div>
+
+    <div class="sd-main">
+      <div class="sd-header-bar">
+        <h1>SerialWorks</h1>
+        <span class="sd-live-badge" id="d-badge">● 离线</span>
+      </div>
+
+      <div class="sd-terminal">
+        <div class="sd-term-tabs">
+          <button class="active">终端</button>
+          <button>HEX 视图</button>
+          <button>协议解析</button>
+          <button>图表</button>
+        </div>
+        <div class="sd-term-body" id="d-term">
+          <div class="line"><span class="ts">14:32:00</span><span class="dir-rx">◄</span><span class="data">Boot: STM32F407VG rev.A</span></div>
+          <div class="line"><span class="ts">14:32:00</span><span class="dir-rx">◄</span><span class="data">Flash: 1024KB | SRAM: 192KB</span></div>
+          <div class="line"><span class="ts">14:32:01</span><span class="dir-rx">◄</span><span class="data">Firmware: v4.2.1 build 2026-04-10</span></div>
+          <div class="line"><span class="ts">14:32:01</span><span class="dir-rx">◄</span><span class="data">System clock: 168 MHz</span></div>
+          <div class="line"><span class="ts">14:32:02</span><span class="dir-tx">►</span><span class="data">$GET_STATUS</span></div>
+          <div class="line"><span class="ts">14:32:02</span><span class="dir-rx">◄</span><span class="data">$STATUS,OK,TEMP=24.5,HUM=61,ADC=3.28</span></div>
+          <div class="line"><span class="ts">14:32:04</span><span class="dir-tx">►</span><span class="data">$SET_LED,GPIO13,ON</span></div>
+          <div class="line"><span class="ts">14:32:04</span><span class="dir-rx">◄</span><span class="data">$ACK,OK</span></div>
+          <div class="line"><span class="ts">14:32:06</span><span class="dir-tx">►</span><span class="data">$READ_I2C,0x68,6</span></div>
+          <div class="line"><span class="ts">14:32:06</span><span class="dir-rx">◄</span><span class="data">$DATA,0x68,FF A0 1C 00 38 02</span></div>
+        </div>
+      </div>
+
+      <div class="sd-send-bar">
+        <input type="text" placeholder="$COMMAND,param1,param2…">
+        <button class="sd-send-btn">发送 ↵</button>
+      </div>
+
+      <div class="sd-bottom-bar">
+        <span>▸ RX: <span class="val">3,842 B</span></span>
+        <span>▸ TX: <span class="val">1,256 B</span></span>
+        <span>▸ 波特率: <span class="val">115200</span></span>
+        <span>▸ 错误: <span class="val">0</span></span>
+        <span>▸ 运行时间: <span class="val">00:06:18</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchStyle(id) {
+  document.querySelectorAll('.design').forEach(d => d.classList.remove('active'));
+  document.querySelectorAll('.style-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('style-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function toggleConn(btn, style) {
+  const isConnected = btn.classList.contains('disconnect') || btn.classList.contains('on');
+  if (isConnected) {
+    btn.classList.remove('disconnect', 'on');
+    btn.textContent = style === 'c' ? '🔌 连接设备' : (style === 'd' ? '打开串口' : '连接');
+    if (style === 'a') document.getElementById('a-dot').classList.remove('on');
+    if (style === 'c') { document.getElementById('c-pulse').classList.remove('on'); document.getElementById('c-status').textContent = '空闲'; }
+    if (style === 'd') { document.getElementById('d-badge').classList.remove('on'); document.getElementById('d-badge').textContent = '● 离线'; }
+  } else {
+    btn.classList.add(style === 'a' || style === 'b' ? 'disconnect' : 'on');
+    btn.textContent = style === 'c' ? '🔌 断开连接' : (style === 'd' ? '关闭串口' : '断开');
+    if (style === 'a') document.getElementById('a-dot').classList.add('on');
+    if (style === 'c') { document.getElementById('c-pulse').classList.add('on'); document.getElementById('c-status').textContent = '已连接'; }
+    if (style === 'd') { document.getElementById('d-badge').classList.add('on'); document.getElementById('d-badge').textContent = '● 在线'; }
+  }
+}
+</script>
+</body>
+</html>

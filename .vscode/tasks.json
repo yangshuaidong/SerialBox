@@ -1,0 +1,91 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake Configure",
+            "type": "shell",
+            "command": "C:/Qt/Tools/CMake_64/bin/cmake.exe",
+            "args": [
+                "-G", "MinGW Makefiles",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-DCMAKE_PREFIX_PATH=C:/Qt/6.11.0/mingw_64",
+                "-S", ".",
+                "-B", "build"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "options": {
+                "env": {
+                    "PATH": "C:/Qt/Tools/mingw1310_64/bin;C:/Qt/6.11.0/mingw_64/bin;${env:PATH}"
+                }
+            }
+        },
+        {
+            "label": "CMake Build",
+            "type": "shell",
+            "command": "C:/Qt/Tools/CMake_64/bin/cmake.exe",
+            "args": ["--build", "build", "--parallel"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "dependsOn": "CMake Configure",
+            "options": {
+                "env": {
+                    "PATH": "C:/Qt/Tools/mingw1310_64/bin;C:/Qt/6.11.0/mingw_64/bin;${env:PATH}"
+                }
+            }
+        },
+        {
+            "label": "CMake Build (Release)",
+            "type": "shell",
+            "command": "C:/Qt/Tools/CMake_64/bin/cmake.exe",
+            "args": [
+                "-G", "MinGW Makefiles",
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DCMAKE_PREFIX_PATH=C:/Qt/6.11.0/mingw_64",
+                "-S", ".",
+                "-B", "build-release"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "options": {
+                "env": {
+                    "PATH": "C:/Qt/Tools/mingw1310_64/bin;C:/Qt/6.11.0/mingw_64/bin;${env:PATH}"
+                }
+            }
+        },
+        {
+            "label": "Clean Build",
+            "type": "shell",
+            "command": "C:/Qt/Tools/CMake_64/bin/cmake.exe",
+            "args": ["--build", "build", "--target", "clean"],
+            "group": "build",
+            "problemMatcher": [],
+            "options": {
+                "env": {
+                    "PATH": "C:/Qt/Tools/mingw1310_64/bin;C:/Qt/6.11.0/mingw_64/bin;${env:PATH}"
+                }
+            }
+        },
+        {
+            "label": "Run SerialBox",
+            "type": "shell",
+            "command": "${workspaceFolder}/build/SerialBox.exe",
+            "args": [],
+            "group": "none",
+            "problemMatcher": [],
+            "dependsOn": "CMake Build",
+            "options": {
+                "env": {
+                    "PATH": "C:/Qt/6.11.0/mingw_64/bin;${env:PATH}"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ]
+}

@@ -1,0 +1,75 @@
+{
+    // ═══════════════════════════════════════════════════
+    //  SerialBox — VSCode 配置 (Qt 6.11.0 + MinGW 64)
+    // ═══════════════════════════════════════════════════
+    // ── CMake ──
+    "cmake.configureOnOpen": false,
+    "cmake.cmakePath": "C:/Qt/Tools/CMake_64/bin/cmake.exe",
+    "cmake.generator": "MinGW Makefiles",
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.configureSettings": {
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.11.0/mingw_64",
+        "CMAKE_BUILD_TYPE": "Debug"
+    },
+    "cmake.environment": {
+        "PATH": "C:/Qt/Tools/mingw1310_64/bin;C:/Qt/6.11.0/mingw_64/bin;${env:PATH}"
+    },
+    // ── C/C++ IntelliSense ──
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.default.cppStandard": "c++20",
+    "C_Cpp.default.compilerPath": "C:/Qt/Tools/mingw1310_64/bin/g++.exe",
+    "C_Cpp.default.intelliSenseMode": "windows-gcc-x64",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/include",
+        "C:/Qt/6.11.0/mingw_64/include/**"
+    ],
+    "C_Cpp.default.defines": [
+        "QT_WIDGETS_LIB",
+        "QT_CORE_LIB",
+        "QT_SERIALPORT_LIB",
+        "QT_NETWORK_LIB",
+        "QT_WEBSOCKETS_LIB"
+    ],
+    // ── 文件关联 ──
+    "files.associations": {
+        "*.h": "cpp",
+        "*.hpp": "cpp",
+        "*.ui": "xml",
+        "*.qrc": "xml",
+        "*.qss": "css",
+        "CMakeLists.txt": "cmake"
+    },
+    // ── 编辑器 ──
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4,
+    "editor.wordWrap": "off",
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs": "active",
+    "editor.suggest.preview": true,
+    "editor.inlayHints.enabled": "on",
+    // ── 文件排除 ──
+    "files.exclude": {
+        "**/.git": true,
+        "**/build": true,
+        "**/build-release": true,
+        "**/cmake-build-*": true,
+        "**/.DS_Store": true,
+        "**/moc_*.cpp": true,
+        "**/qrc_*.cpp": true,
+        "**/ui_*.h": true
+    },
+    // ── 搜索排除 ──
+    "search.exclude": {
+        "**/build": true,
+        "**/build-release": true
+    },
+    // ── 终端 ──
+    "terminal.integrated.defaultProfile.windows": "Git Bash",
+    "terminal.integrated.automationProfile.windows": {
+        "path": "C:/Windows/System32/cmd.exe",
+        "args": []
+    },
+    "terminal.integrated.env.windows": {
+        "PATH": "C:/Qt/Tools/mingw1310_64/bin;C:/Qt/6.11.0/mingw_64/bin;${env:PATH}"
+    }
+}

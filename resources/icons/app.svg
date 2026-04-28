@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="#1e1e2e" stroke="#7c3aed" stroke-width="3"/>
+  <!-- serial port connector icon -->
+  <rect x="14" y="18" width="36" height="28" rx="4" fill="none" stroke="#cdd6f4" stroke-width="2.5"/>
+  <!-- pins -->
+  <circle cx="22" cy="28" r="2.5" fill="#89b4fa"/>
+  <circle cx="32" cy="28" r="2.5" fill="#40c057"/>
+  <circle cx="42" cy="28" r="2.5" fill="#fab387"/>
+  <circle cx="22" cy="36" r="2.5" fill="#f38ba8"/>
+  <circle cx="32" cy="36" r="2.5" fill="#cba6f7"/>
+  <circle cx="42" cy="36" r="2.5" fill="#89dceb"/>
+  <!-- RX/TX indicators -->
+  <text x="14" y="54" font-family="monospace" font-size="8" fill="#6c7086">RX/TX</text>
+  <rect x="36" y="48" width="4" height="4" rx="1" fill="#40c057"/>
+  <rect x="42" y="48" width="4" height="4" rx="1" fill="#89b4fa"/>
+</svg>

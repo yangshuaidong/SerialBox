@@ -1,0 +1,18 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/">
+        <file>themes/dark.qss</file>
+        <file>themes/graphite.qss</file>
+        <file>themes/light.qss</file>
+        <file>themes/ocean.qss</file>
+        <file>themes/professional.qss</file>
+    </qresource>
+    <qresource prefix="/docs">
+        <file>docs/README_PLUGIN_DEV.md</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file alias="app.svg">icons/app.svg</file>
+        <file alias="connect.svg">icons/connect.svg</file>
+        <file alias="disconnect.svg">icons/disconnect.svg</file>
+    </qresource>
+</RCC>

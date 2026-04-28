@@ -1,0 +1,26 @@
+# Build
+build/
+cmake-build-*/
+out/
+
+# IDE (除 .vscode 外)
+.idea/
+*.swp
+*.swo
+*~
+
+# Qt
+*.pro.user
+*.qmake.stash
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python (embedded)
+__pycache__/
+*.pyc
+*.pyo
