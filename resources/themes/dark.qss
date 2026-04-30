@@ -2,9 +2,8 @@
    SerialBox — Catppuccin Mocha 暗色主题
    ═══════════════════════════════════════════════════ */
 
-/* 全局字体与颜色（不设背景，避免污染弹窗） */
+/* 全局字体（不设 color/background，避免污染弹窗） */
 * {
-    color: #cdd6f4;
     font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
     font-size: 13px;
 }
@@ -12,6 +11,7 @@
 /* ── 主窗口 / 中央控件 ── */
 QMainWindow, QWidget#centralWidget {
     background-color: #1e1e2e;
+    color: #cdd6f4;
 }
 
 QMainWindow::separator {
@@ -54,6 +54,11 @@ QMenu::item {
 QMenu::item:selected {
     background: #2a2a40;
     color: #cdd6f4;
+}
+
+QMenu::item:checked {
+    color: #89b4fa;
+    font-weight: bold;
 }
 
 QMenu::separator {
@@ -122,12 +127,14 @@ QStatusBar::item {
 /* ── 弹窗 ── */
 QDialog {
     background-color: #1e1e2e;
+    color: #cdd6f4;
     border: 1px solid #3a3a55;
     border-radius: 8px;
 }
 
 QMessageBox {
     background-color: #1e1e2e;
+    color: #cdd6f4;
 }
 
 QMessageBox QLabel {
@@ -136,6 +143,7 @@ QMessageBox QLabel {
 
 QFileDialog {
     background-color: #1e1e2e;
+    color: #cdd6f4;
 }
 
 /* ── 按钮 ── */
@@ -365,6 +373,7 @@ QScrollBar::sub-page:horizontal {
 QTabWidget::pane {
     border: 1px solid #3a3a55;
     background: #1e1e2e;
+    color: #cdd6f4;
     border-radius: 0 0 8px 8px;
 }
 
@@ -388,6 +397,7 @@ QTabBar::tab:hover:!selected {
 /* ── 列表/树 ── */
 QListWidget, QTreeWidget, QTreeView {
     background: #1e1e2e;
+    color: #cdd6f4;
     border: none;
     outline: none;
 }

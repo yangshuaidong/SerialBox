@@ -67,6 +67,11 @@ QMenu::item:selected {
     color: #FFFFFF;
 }
 
+QMenu::item:checked {
+    color: #5EA6FF;
+    font-weight: bold;
+}
+
 QToolBar {
     border-left: none;
     border-right: none;

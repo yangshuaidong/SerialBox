@@ -24,15 +24,16 @@ public:
     static quint16 crc16(const QByteArray &data);
     static QString funcCodeName(quint8 code);
 
-private:
     /**
-     * 根据帧内容推算期望帧长度
-     * @return 期望字节数，-1 表示无法确定
+     * 通知解析器：刚发送了一帧请求
+     * 用于区分同一 FC 的请求/响应帧（0x03/0x04）
      */
-    int expectedFrameLength(const QByteArray &buffer) const;
+    void notifySent(quint8 fc);
 
-    /**
-     * 判断是否为异常响应（FC | 0x80）
-     */
+private:
+    int expectedFrameLength(const QByteArray &buffer) const;
     static bool isExceptionResponse(quint8 fc) { return fc & 0x80; }
+
+    // 最后发送的请求 FC，用于请求/响应区分
+    quint8 m_lastSentFc = 0;
 };

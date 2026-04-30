@@ -1,10 +1,24 @@
 #include "SerialBox/core/DataPipeline.h"
 #include <QDateTime>
+#include <QTimer>
 #include <algorithm>
 
 DataPipeline::DataPipeline(QObject *parent)
     : QObject(parent)
 {
+    // 防抖定时器：500ms 内多次设置变更只触发一次信号
+    m_settingsDebounce = new QTimer(this);
+    m_settingsDebounce->setSingleShot(true);
+    m_settingsDebounce->setInterval(500);
+    connect(m_settingsDebounce, &QTimer::timeout, this, &DataPipeline::displaySettingsChanged);
+}
+
+void DataPipeline::scheduleSettingsChanged()
+{
+    if (!m_settingsDebounce->isActive()) {
+        m_settingsDebounce->start();
+    }
+    // 如果已经在运行，重置倒计时
 }
 
 void DataPipeline::addIncomingHook(const QString &name, Hook hook, int priority)
@@ -42,39 +56,54 @@ void DataPipeline::setDisplayMode(DisplayMode mode)
     if (m_displayMode == mode) return;
     m_displayMode = mode;
     emit displayModeChanged(m_displayMode);
-    emit displaySettingsChanged();
+    scheduleSettingsChanged();
 }
 
 void DataPipeline::setTimestampEnabled(bool e)
 {
     if (m_timestampEnabled == e) return;
     m_timestampEnabled = e;
-    emit displaySettingsChanged();
+    scheduleSettingsChanged();
 }
 
 void DataPipeline::setAutoNewline(bool e)
 {
     if (m_autoNewline == e) return;
     m_autoNewline = e;
-    emit displaySettingsChanged();
+    scheduleSettingsChanged();
 }
 
 void DataPipeline::setEchoEnabled(bool e)
 {
     if (m_echoEnabled == e) return;
     m_echoEnabled = e;
-    emit displaySettingsChanged();
+    scheduleSettingsChanged();
+}
+
+void DataPipeline::applyDisplaySettings(DisplayMode mode, bool timestamp, bool autoNewline, bool echo)
+{
+    bool changed = false;
+    if (m_displayMode != mode) {
+        m_displayMode = mode;
+        changed = true;
+        emit displayModeChanged(mode);
+    }
+    if (m_timestampEnabled != timestamp) { m_timestampEnabled = timestamp; changed = true; }
+    if (m_autoNewline != autoNewline) { m_autoNewline = autoNewline; changed = true; }
+    if (m_echoEnabled != echo) { m_echoEnabled = echo; changed = true; }
+    if (changed) {
+        // 批量更新直接触发，不走防抖
+        emit displaySettingsChanged();
+    }
 }
 
 void DataPipeline::processIncoming(const QByteArray &raw)
 {
     QByteArray data = raw;
 
-    // 执行钩子链
     for (const auto &hook : m_incomingHooks) {
         data = hook.hook(data);
         if (data.isEmpty()) {
-            // 钩子拦截了数据 — 发出信号而非静默丢弃
             emit dataIntercepted(raw, hook.name);
             return;
         }

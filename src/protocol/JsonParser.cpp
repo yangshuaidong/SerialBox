@@ -9,7 +9,6 @@ JsonParser::JsonParser(QObject *parent)
 
 bool JsonParser::match(const QByteArray &buffer)
 {
-    // 检测完整 JSON 对象：以 { 开头，深度匹配到 }
     int depth = 0;
     bool inString = false;
     bool escaped = false;
@@ -35,9 +34,7 @@ IProtocolParser::ParseResult JsonParser::parse(QByteArray &buffer)
     ParseResult result;
     result.protocolName = name();
 
-    if (!match(buffer)) return result;
-
-    // 提取 JSON 帧
+    // 一次扫描：同时完成 match 判断和 frameEnd 提取
     int depth = 0;
     bool inString = false;
     bool escaped = false;
@@ -73,25 +70,24 @@ IProtocolParser::ParseResult JsonParser::parse(QByteArray &buffer)
     result.matched = true;
     result.rawFrames.append(jsonFrame);
 
-    // 区分 JSON-RPC 2.0 与普通 JSON
+    // 区分 JSON-RPC 2.0 与普通 JSON（元数据写入 rpcMeta，不污染 fields）
     QJsonObject obj = doc.object();
     if (obj.contains("jsonrpc") && obj.value("jsonrpc").toString() == "2.0") {
-        result.fields["_protocol"] = "jsonrpc2";
+        result.rpcMeta.isRpc = true;
         if (obj.contains("method")) {
-            // Request 或 Notification
-            result.fields["_rpcType"] = obj.contains("id") ? "request" : "notification";
-            result.fields["_rpcMethod"] = obj.value("method").toString();
+            result.rpcMeta.type = obj.contains("id") ? "request" : "notification";
+            result.rpcMeta.method = obj.value("method").toString();
         } else if (obj.contains("result")) {
-            result.fields["_rpcType"] = "response";
+            result.rpcMeta.type = "response";
         } else if (obj.contains("error")) {
-            result.fields["_rpcType"] = "error";
+            result.rpcMeta.type = "error";
             QJsonObject errObj = obj.value("error").toObject();
-            result.fields["_rpcErrorCode"] = errObj.value("code").toInt();
-            result.fields["_rpcErrorMsg"] = errObj.value("message").toString();
+            result.rpcMeta.errorCode = errObj.value("code").toInt();
+            result.rpcMeta.errorMsg = errObj.value("message").toString();
         }
     }
 
-    result.fields.unite(obj.toVariantMap());
+    result.fields = obj.toVariantMap();
     result.displayText = QString(QJsonDocument(doc).toJson(QJsonDocument::Compact));
 
     return result;
@@ -100,12 +96,6 @@ IProtocolParser::ParseResult JsonParser::parse(QByteArray &buffer)
 QByteArray JsonParser::build(const QVariantMap &fields)
 {
     QJsonObject obj = QJsonObject::fromVariantMap(fields);
-    // 移除内部标记字段
-    obj.remove("_protocol");
-    obj.remove("_rpcType");
-    obj.remove("_rpcMethod");
-    obj.remove("_rpcErrorCode");
-    obj.remove("_rpcErrorMsg");
     return QJsonDocument(obj).toJson(QJsonDocument::Compact);
 }
 

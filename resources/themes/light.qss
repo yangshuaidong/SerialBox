@@ -66,6 +66,11 @@ QMenu::item:selected {
     color: #1A1A1A;
 }
 
+QMenu::item:checked {
+    color: #2D7ED4;
+    font-weight: bold;
+}
+
 QMenu::separator {
     height: 1px;
     background: #E8E8E8;

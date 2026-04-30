@@ -19,6 +19,12 @@ void ConfigManager::load()
     m_preset.flowControl = m_settings.value("serial/flow", "None").toString();
     m_preset.timeoutMs = m_settings.value("serial/timeout", 1000).toInt();
 
+    // 显示设置（首次运行时使用默认值）
+    // displaySettings() 是从 m_settings 直接读取的，此处无需额外操作
+    // 但显式调用一次确保默认值写入磁盘
+    auto ds = displaySettings();
+    Q_UNUSED(ds);
+
     auto doc = QJsonDocument::fromJson(m_settings.value("commands/library").toByteArray());
     m_commands = doc.object();
 }

@@ -6,6 +6,11 @@ ModbusParser::ModbusParser(QObject *parent)
 {
 }
 
+void ModbusParser::notifySent(quint8 fc)
+{
+    m_lastSentFc = fc;
+}
+
 int ModbusParser::expectedFrameLength(const QByteArray &buffer) const
 {
     if (buffer.size() < 2) return -1;
@@ -19,58 +24,54 @@ int ModbusParser::expectedFrameLength(const QByteArray &buffer) const
 
     switch (fc) {
     // ── 读线圈/离散输入/保持寄存器/输入寄存器 ──
-    case 0x01: case 0x02: case 0x03: case 0x04:
-        // 请求帧: [ID][FC][AddrH][AddrL][QtyH][QtyL][CRC] = 8
-        // 响应帧: [ID][FC][ByteCount][Data(N)][CRC] = 3+N+2
-        // 通过第三个字节判断：如果 buffer[2] * 2 + 5 == buffer.size() 则为响应
-        // 更可靠：请求固定 8 字节；响应第三个字节是 ByteCount
-        if (buffer.size() >= 3) {
+    case 0x01: case 0x02: case 0x03: case 0x04: {
+        // 关键：通过 m_lastSentFc 判断当前 buffer 是请求还是响应
+        // 如果刚发送了相同 FC 的请求，则 buffer 是响应帧
+        bool isResponse = (m_lastSentFc == fc);
+        if (isResponse && buffer.size() >= 3) {
             int byteCount = static_cast<quint8>(buffer[2]);
-            int responseLen = 3 + byteCount + 2;
-            // 如果 buffer 长度 >= responseLen 且 byteCount 合理 (1-252)
-            if (byteCount >= 1 && byteCount <= 252 && buffer.size() >= responseLen) {
-                return responseLen;
+            if (byteCount >= 1 && byteCount <= 252) {
+                return 3 + byteCount + 2;  // 响应: [ID][FC][ByteCount][Data(N)][CRC]
             }
         }
-        // 默认按请求帧处理
+        // 请求帧或无法确定: 固定 8 字节
+        // [ID][FC][AddrH][AddrL][QtyH][QtyL][CRC]
         return 8;
+    }
 
     // ── 写单线圈/单寄存器 ──
     case 0x05: case 0x06:
-        // 请求/响应格式相同: [ID][FC][AddrH][AddrL][ValH][ValL][CRC] = 8
-        return 8;
+        return 8;  // 请求/响应格式相同
 
     // ── 写多线圈 ──
     case 0x0F: {
-        // 请求: [ID][FC][AddrH][AddrL][QtyH][QtyL][ByteCount][Data(N)][CRC]
-        // 响应: [ID][FC][AddrH][AddrL][QtyH][QtyL][CRC] = 8
+        // 响应帧固定 8 字节: [ID][FC][AddrH][AddrL][QtyH][QtyL][CRC]
+        bool isResponse = (m_lastSentFc == fc);
+        if (isResponse) return 8;
+
+        // 请求帧: [ID][FC][AddrH][AddrL][QtyH][QtyL][ByteCount][Data(N)][CRC]
         if (buffer.size() >= 7) {
             int byteCount = static_cast<quint8>(buffer[6]);
-            int requestLen = 7 + byteCount + 2;
-            if (buffer.size() >= requestLen) {
-                return requestLen;
-            }
+            return 7 + byteCount + 2;
         }
-        // 响应帧 8 字节
         return 8;
     }
 
     // ── 写多寄存器 ──
     case 0x10: {
+        bool isResponse = (m_lastSentFc == fc);
+        if (isResponse) return 8;  // 响应固定 8 字节
+
         // 请求: [ID][FC][AddrH][AddrL][QtyH][QtyL][ByteCount][Data(N)][CRC]
-        // 响应: [ID][FC][AddrH][AddrL][QtyH][QtyL][CRC] = 8
         if (buffer.size() >= 7) {
             int byteCount = static_cast<quint8>(buffer[6]);
-            int requestLen = 7 + byteCount + 2;
-            if (buffer.size() >= requestLen) {
-                return requestLen;
-            }
+            return 7 + byteCount + 2;
         }
         return 8;
     }
 
     default:
-        return -1; // 未知功能码
+        return -1;  // 未知功能码
     }
 }
 
@@ -102,7 +103,7 @@ IProtocolParser::ParseResult ModbusParser::parse(QByteArray &buffer)
     quint8 slaveId  = static_cast<quint8>(buffer[0]);
     quint8 funcCode = static_cast<quint8>(buffer[1]);
 
-    // CRC 验证结果
+    // CRC（match() 已校验过，此处直接取值用于显示）
     quint16 receivedCrc = static_cast<quint8>(buffer[frameLen - 2])
                         | (static_cast<quint8>(buffer[frameLen - 1]) << 8);
     quint16 calcCrc = crc16(buffer.left(frameLen - 2));
@@ -125,19 +126,22 @@ IProtocolParser::ParseResult ModbusParser::parse(QByteArray &buffer)
         result.matched = true;
         result.rawFrames.append(buffer.left(frameLen));
         buffer.remove(0, frameLen);
+        m_lastSentFc = 0;  // 重置
         return result;
     }
 
+    bool isResponse = (m_lastSentFc == funcCode);
+    result.fields["direction"] = isResponse ? "response" : "request";
+
     switch (funcCode) {
-    // ── 读保持/输入寄存器 响应 ──
-    case 0x03: case 0x04: {
-        if (buffer.size() >= 3 && frameLen > 8) {
-            // 响应帧
+    // ── 读线圈/离散输入/保持寄存器/输入寄存器 ──
+    case 0x01: case 0x02: case 0x03: case 0x04: {
+        if (isResponse) {
+            // 响应帧: [ID][FC][ByteCount][Data(N)][CRC]
             int byteCount = static_cast<quint8>(buffer[2]);
             QByteArray data = buffer.mid(3, byteCount);
 
             result.fields["byteCount"] = byteCount;
-            result.fields["direction"] = "response";
 
             QVariantList registers;
             for (int i = 0; i + 1 < byteCount; i += 2) {
@@ -156,12 +160,11 @@ IProtocolParser::ParseResult ModbusParser::parse(QByteArray &buffer)
                 .arg(vals.join(", "))
                 .arg(receivedCrc == calcCrc ? "✓" : "✗");
         } else {
-            // 请求帧
+            // 请求帧: [ID][FC][AddrH][AddrL][QtyH][QtyL][CRC]
             quint16 addr = (static_cast<quint8>(buffer[2]) << 8) | static_cast<quint8>(buffer[3]);
             quint16 qty  = (static_cast<quint8>(buffer[4]) << 8) | static_cast<quint8>(buffer[5]);
             result.fields["address"] = addr;
             result.fields["quantity"] = qty;
-            result.fields["direction"] = "request";
             result.displayText = QString("[%1] %2 请求 @%3 ×%4")
                 .arg(slaveId)
                 .arg(funcCodeName(funcCode))
@@ -196,24 +199,20 @@ IProtocolParser::ParseResult ModbusParser::parse(QByteArray &buffer)
 
     // ── 写多线圈 ──
     case 0x0F: {
-        if (frameLen == 8) {
-            // 响应帧
+        if (isResponse) {
             quint16 addr = (static_cast<quint8>(buffer[2]) << 8) | static_cast<quint8>(buffer[3]);
             quint16 qty  = (static_cast<quint8>(buffer[4]) << 8) | static_cast<quint8>(buffer[5]);
             result.fields["address"] = addr;
             result.fields["quantity"] = qty;
-            result.fields["direction"] = "response";
             result.displayText = QString("[%1] 写多线圈响应 @%2 ×%3")
                 .arg(slaveId).arg(addr).arg(qty);
         } else {
-            // 请求帧
             quint16 addr = (static_cast<quint8>(buffer[2]) << 8) | static_cast<quint8>(buffer[3]);
             quint16 qty  = (static_cast<quint8>(buffer[4]) << 8) | static_cast<quint8>(buffer[5]);
             int byteCount = static_cast<quint8>(buffer[6]);
             result.fields["address"] = addr;
             result.fields["quantity"] = qty;
             result.fields["byteCount"] = byteCount;
-            result.fields["direction"] = "request";
             result.displayText = QString("[%1] 写多线圈 @%2 ×%3 (%4B)")
                 .arg(slaveId).arg(addr).arg(qty).arg(byteCount);
         }
@@ -222,17 +221,14 @@ IProtocolParser::ParseResult ModbusParser::parse(QByteArray &buffer)
 
     // ── 写多寄存器 ──
     case 0x10: {
-        if (frameLen == 8) {
-            // 响应帧
+        if (isResponse) {
             quint16 addr = (static_cast<quint8>(buffer[2]) << 8) | static_cast<quint8>(buffer[3]);
             quint16 qty  = (static_cast<quint8>(buffer[4]) << 8) | static_cast<quint8>(buffer[5]);
             result.fields["address"] = addr;
             result.fields["quantity"] = qty;
-            result.fields["direction"] = "response";
             result.displayText = QString("[%1] 写多寄存器响应 @%2 ×%3")
                 .arg(slaveId).arg(addr).arg(qty);
         } else {
-            // 请求帧
             quint16 addr = (static_cast<quint8>(buffer[2]) << 8) | static_cast<quint8>(buffer[3]);
             quint16 qty  = (static_cast<quint8>(buffer[4]) << 8) | static_cast<quint8>(buffer[5]);
             int byteCount = static_cast<quint8>(buffer[6]);
@@ -249,7 +245,6 @@ IProtocolParser::ParseResult ModbusParser::parse(QByteArray &buffer)
             result.fields["quantity"] = qty;
             result.fields["byteCount"] = byteCount;
             result.fields["registers"] = registers;
-            result.fields["direction"] = "request";
 
             QStringList vals;
             for (auto &v : registers) vals.append(QString::number(v.toUInt()));
@@ -260,14 +255,17 @@ IProtocolParser::ParseResult ModbusParser::parse(QByteArray &buffer)
     }
 
     default:
+        // 未知功能码 — 不消费 buffer，不标记 matched
         result.displayText = QString("[%1] 未知功能码 0x%2")
             .arg(slaveId)
             .arg(funcCode, 2, 16, QChar('0'));
+        return result;  // ← 直接返回
     }
 
     result.matched = true;
     result.rawFrames.append(buffer.left(frameLen));
     buffer.remove(0, frameLen);
+    m_lastSentFc = 0;  // 消费后重置
     return result;
 }
 
@@ -284,7 +282,6 @@ QByteArray ModbusParser::build(const QVariantMap &fields)
 
     switch (funcCode) {
     case 0x01: case 0x02: case 0x03: case 0x04:
-        // 读请求
         frame.append(static_cast<char>(addr >> 8));
         frame.append(static_cast<char>(addr & 0xFF));
         frame.append(static_cast<char>(count >> 8));
@@ -292,7 +289,6 @@ QByteArray ModbusParser::build(const QVariantMap &fields)
         break;
 
     case 0x05: {
-        // 写单线圈
         quint16 val = fields.value("value", 0xFF00).toUInt();
         frame.append(static_cast<char>(addr >> 8));
         frame.append(static_cast<char>(addr & 0xFF));
@@ -302,7 +298,6 @@ QByteArray ModbusParser::build(const QVariantMap &fields)
     }
 
     case 0x06: {
-        // 写单寄存器
         quint16 val = fields.value("value", 0).toUInt();
         frame.append(static_cast<char>(addr >> 8));
         frame.append(static_cast<char>(addr & 0xFF));
@@ -312,7 +307,6 @@ QByteArray ModbusParser::build(const QVariantMap &fields)
     }
 
     case 0x0F: case 0x10: {
-        // 写多线圈/寄存器
         QVariantList regs = fields.value("registers").toList();
         int byteCount = 0;
         QByteArray data;
@@ -326,7 +320,6 @@ QByteArray ModbusParser::build(const QVariantMap &fields)
             byteCount = data.size();
             count = regs.size();
         } else {
-            // 0x0F: 线圈，每 bit 一个
             data = fields.value("data").toByteArray();
             byteCount = data.size();
         }
@@ -341,13 +334,16 @@ QByteArray ModbusParser::build(const QVariantMap &fields)
     }
 
     default:
-        // 未知功能码，原样拼接原始 data
         frame.append(fields.value("data").toByteArray());
     }
 
     quint16 crc = crc16(frame);
     frame.append(static_cast<char>(crc & 0xFF));
     frame.append(static_cast<char>(crc >> 8));
+
+    // 通知解析器：刚发送了此 FC
+    // 注意：这里不能直接调用 notifySent，因为 build() 不一定被同一个 parser 调用
+    // 调用方应在 sendData 后调用 parser->notifySent(fc)
 
     return frame;
 }

@@ -19,13 +19,23 @@ public:
     virtual QString name() const = 0;
     virtual QString description() const = 0;
 
+    // ── JSON-RPC 元数据（独立于 fields，避免污染用户数据）──
+    struct RpcMeta {
+        bool isRpc = false;
+        QString type;       // "request" | "notification" | "response" | "error"
+        QString method;
+        int errorCode = 0;
+        QString errorMsg;
+    };
+
     // ── 数据 → 结构化报文 ──
     struct ParseResult {
         bool matched = false;
         QString protocolName;
-        QVariantMap fields;          // 结构化字段
+        QVariantMap fields;          // 结构化字段（纯用户数据）
         QString displayText;         // 人类可读文本
         QList<QByteArray> rawFrames; // 完整帧
+        RpcMeta rpcMeta;             // JSON-RPC 专用元数据
     };
 
     /**

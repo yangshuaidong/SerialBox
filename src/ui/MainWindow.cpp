@@ -651,11 +651,10 @@ void MainWindow::setupMenuBar()
                                              "<p>现代化跨平台串口调试工具</p>"
                                              "<p>Built with Qt6</p>"); });
 
-    // 菜单中带 ✓ 的样式
+    // 菜单中带 ✓ 的样式（从当前主题 QSS 继承，不硬编码颜色）
     menuBar()->setStyleSheet(menuBar()->styleSheet() +
-                             "QMenu::indicator { width: 0; height: 0; }" // 隐藏默认 checkbox 方块
+                             "QMenu::indicator { width: 0; height: 0; }"
                              "QMenu::item:checked { "
-                             "  color: #4A90D9; "
                              "  font-weight: bold; "
                              "}");
 }
@@ -1546,10 +1545,11 @@ void MainWindow::loadSettings()
     restoreState(m_config->windowState());
 
     // 使用配置中的 splitRatio（而非硬编码）
+    // 注意：窗口可能尚未 show()，height() 可能为 0，用 restoreGeometry 后的值估算
     double ratio = m_config->splitRatio();
-    int total = m_mainSplitter->height() > 0 ? m_mainSplitter->height() : 800;
-    int recvH = static_cast<int>(total * ratio);
-    int sendH = total - recvH;
+    int h = sizeHint().height() > 0 ? sizeHint().height() : 800;
+    int recvH = static_cast<int>(h * ratio);
+    int sendH = h - recvH;
     m_mainSplitter->setSizes({qMax(100, recvH), qMax(60, sendH)});
 
     // 同步 DataPipeline 显示设置

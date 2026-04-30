@@ -109,10 +109,15 @@ void SerialBridge::registerRpcMethods()
 
     // serial.connect — 连接串口
     m_rpcServer.registerMethod("serial.connect", [this](const QJsonObject &params) {
-        if (!m_serialManager) return QJsonValue(false);
+        if (!m_serialManager) {
+            throw std::runtime_error("serial manager not available");
+        }
 
         ISerialTransport::Config cfg;
         cfg.portName = params.value("port").toString();
+        if (cfg.portName.isEmpty()) {
+            throw std::invalid_argument("missing required parameter: port");
+        }
         cfg.baudRate = params.value("baudRate", 115200).toInt();
         cfg.dataBits = params.value("dataBits", 8).toInt();
         cfg.stopBits = params.value("stopBits", 1).toInt();
@@ -132,7 +137,7 @@ void SerialBridge::registerRpcMethods()
     // serial.send — 发送数据（支持 hex/text/base64 三种格式）
     m_rpcServer.registerMethod("serial.send", [this](const QJsonObject &params) {
         if (!m_serialManager || !m_serialManager->isConnected())
-            return QJsonValue(QJsonObject{{"error", "not connected"}});
+            throw std::runtime_error("not connected");
 
         QString format = params.value("format").toString("hex");
         QString payload = params.value("data").toString();
@@ -145,7 +150,7 @@ void SerialBridge::registerRpcMethods()
         } else if (format == "base64") {
             data = QByteArray::fromBase64(payload.toLatin1());
         } else {
-            return QJsonValue(QJsonObject{{"error", "unknown format: " + format}});
+            throw std::invalid_argument(("unknown format: " + format).toStdString());
         }
 
         qint64 written = m_serialManager->sendData(data);

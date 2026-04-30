@@ -47,6 +47,11 @@ QMenu::item:selected {
     background: #1d3a54;
 }
 
+QMenu::item:checked {
+    color: #32a6ff;
+    font-weight: bold;
+}
+
 QPushButton {
     background: #19324a;
     border: 1px solid #2b4f70;

@@ -56,8 +56,16 @@ public:
      */
     ProcessOutput processMessage(const QJsonObject &msg);
 
-    // 保留旧接口兼容
+    // 保留旧接口兼容（返回值为空时表示 Notification，无需回复）
     QJsonObject processRequest(const QJsonObject &request);
+
+    /**
+     * isNotificationResponse: 检查返回值是否表示 Notification 无需回复
+     * 旧接口 processRequest() 返回空 QJsonObject 时表示 Notification
+     */
+    static bool isEmptyResponse(const QJsonObject &obj) {
+        return obj.isEmpty();
+    }
 
     static QJsonObject makeResponse(const QJsonValue &id, const QJsonValue &result);
     static QJsonObject makeError(const QJsonValue &id, int code, const QString &message);
