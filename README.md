@@ -2,10 +2,6 @@
 
 > 现代化跨平台串口调试工具 · Qt6 · C++20
 
-![Build](https://img.shields.io/badge/Qt-6.5+-41CD52?logo=qt&logoColor=white)
-![C++](https://img.shields.io/badge/C++-20-00599C?logo=cplusplus)
-![Platform](https://img.shields.io/badge/平台-Windows%20|%20Linux%20|%20macOS-lightgrey)
-
 ---
 
 ## 🏗️ 架构总览
