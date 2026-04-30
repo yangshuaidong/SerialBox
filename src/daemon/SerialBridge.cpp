@@ -1,9 +1,3 @@
-/*
- * BEGINNER_NOTE: 这是 SerialBox 的源码文件。
- * 文件路径: src/daemon/SerialBridge.cpp
- * 阅读建议: 先看文件顶部的类/函数声明，再顺着调用关系阅读。
- * 目标: 让零基础同学也能快速理解该文件在项目中的作用。
- */
 #include "SerialBox/daemon/SerialBridge.h"
 #include "SerialBox/core/SerialPortManager.h"
 
@@ -47,12 +41,12 @@ bool SerialBridge::start(quint16 port)
 
     connect(m_server, &QWebSocketServer::newConnection, this, &SerialBridge::onNewConnection);
 
-    // 串口事件转发给所有 WebSocket 客户端
     if (m_serialManager) {
         connect(m_serialManager, &SerialPortManager::dataReceived, this,
                 [this](const QByteArray &data) {
                     broadcastEvent("serial.data", {
                         {"hex", QString(data.toHex(' ').toUpper())},
+                        {"text", QString::fromUtf8(data)},
                         {"size", data.size()}
                     });
                 });
@@ -135,15 +129,30 @@ void SerialBridge::registerRpcMethods()
         return QJsonValue(true);
     });
 
-    // serial.send — 发送数据（hex 格式）
+    // serial.send — 发送数据（支持 hex/text/base64 三种格式）
     m_rpcServer.registerMethod("serial.send", [this](const QJsonObject &params) {
         if (!m_serialManager || !m_serialManager->isConnected())
-            return QJsonValue(-1);
+            return QJsonValue(QJsonObject{{"error", "not connected"}});
 
-        QString hex = params.value("hex").toString().remove(' ');
-        QByteArray data = QByteArray::fromHex(hex.toLatin1());
+        QString format = params.value("format").toString("hex");
+        QString payload = params.value("data").toString();
+        QByteArray data;
+
+        if (format == "hex") {
+            data = QByteArray::fromHex(payload.remove(' ').toLatin1());
+        } else if (format == "text") {
+            data = payload.toUtf8();
+        } else if (format == "base64") {
+            data = QByteArray::fromBase64(payload.toLatin1());
+        } else {
+            return QJsonValue(QJsonObject{{"error", "unknown format: " + format}});
+        }
+
         qint64 written = m_serialManager->sendData(data);
-        return QJsonValue(static_cast<int>(written));
+        return QJsonValue(QJsonObject{
+            {"written", static_cast<int>(written)},
+            {"format", format}
+        });
     });
 
     // serial.stats — 获取收发统计
@@ -185,14 +194,19 @@ void SerialBridge::onTextMessage(QWebSocket *sender, const QString &message)
 {
     QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8());
     if (!doc.isObject()) {
-        QJsonObject err = JsonRpcServer::makeError(QJsonValue(), -32700, "Parse error");
+        QJsonObject err = JsonRpcServer::makeError(
+            QJsonValue(), ErrorCodes::ParseError, "Parse error");
         sender->sendTextMessage(QJsonDocument(err).toJson(QJsonDocument::Compact));
         return;
     }
 
-    QJsonObject request = doc.object();
-    QJsonObject response = m_rpcServer.processRequest(request);
-    sender->sendTextMessage(QJsonDocument(response).toJson(QJsonDocument::Compact));
+    // 严格区分 Request vs Notification
+    auto output = m_rpcServer.processMessage(doc.object());
+    if (output.type == JsonRpcServer::MessageType::Request) {
+        sender->sendTextMessage(
+            QJsonDocument(output.response).toJson(QJsonDocument::Compact));
+    }
+    // Notification: 不回复
 }
 
 void SerialBridge::onSocketDisconnected()
@@ -210,6 +224,7 @@ void SerialBridge::onSocketDisconnected()
 void SerialBridge::broadcastEvent(const QString &event, const QJsonObject &data)
 {
 #ifdef ENABLE_WEBSOCKETS
+    // JSON-RPC 2.0 Notification（无 id 字段）
     QJsonObject msg{
         {"jsonrpc", "2.0"},
         {"method", event},

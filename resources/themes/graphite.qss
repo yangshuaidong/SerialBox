@@ -1,3 +1,5 @@
+/* SerialBox — Graphite 高对比暗色主题 */
+
 * {
     font-family: 'SF Pro Text', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     font-size: 13px;
@@ -6,6 +8,20 @@
 
 QMainWindow {
     background: #1c1c1e;
+}
+
+QDialog {
+    background: #1c1c1e;
+    border: 1px solid #3a3a3c;
+    border-radius: 8px;
+}
+
+QMessageBox {
+    background: #1c1c1e;
+}
+
+QMessageBox QLabel {
+    color: #f2f2f7;
 }
 
 QMenuBar,
@@ -43,10 +59,29 @@ QPushButton:hover {
     background: #3a3a3c;
 }
 
-QPushButton:default {
+QPushButton:default,
+QPushButton[role="primary"] {
     background: #0a84ff;
     border-color: #0a84ff;
     color: #ffffff;
+}
+
+QPushButton[role="danger"] {
+    background: #ff453a;
+    border-color: #ff453a;
+    color: #ffffff;
+}
+
+QPushButton[role="success"] {
+    background: #30d158;
+    border-color: #30d158;
+    color: #ffffff;
+}
+
+QPushButton[role="warning"] {
+    background: #ffd60a;
+    border-color: #ffd60a;
+    color: #1c1c1e;
 }
 
 QLineEdit,
@@ -59,6 +94,13 @@ QTabWidget::pane {
     border: 1px solid #3a3a3c;
     border-radius: 10px;
     color: #f2f2f7;
+    selection-background-color: #0a84ff;
+}
+
+QLineEdit:focus,
+QTextEdit:focus,
+QPlainTextEdit:focus {
+    border-color: #0a84ff;
 }
 
 QTabBar::tab {
@@ -75,4 +117,20 @@ QTabBar::tab:selected {
 QScrollBar::handle {
     background: #636366;
     border-radius: 4px;
+}
+
+QGroupBox {
+    border: 1px solid #3a3a3c;
+    border-radius: 8px;
+    margin-top: 12px;
+    padding-top: 16px;
+    color: #8e8e93;
+}
+
+QSplitter::handle {
+    background: #3a3a3c;
+}
+
+QSplitter::handle:hover {
+    background: #0a84ff;
 }

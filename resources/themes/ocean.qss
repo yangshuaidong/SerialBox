@@ -1,3 +1,5 @@
+/* SerialBox — Ocean 色盲友好主题 */
+
 * {
     font-family: 'SF Pro Text', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     font-size: 13px;
@@ -6,6 +8,20 @@
 
 QMainWindow {
     background: #0f1f2e;
+}
+
+QDialog {
+    background: #0f1f2e;
+    border: 1px solid #25405a;
+    border-radius: 8px;
+}
+
+QMessageBox {
+    background: #0f1f2e;
+}
+
+QMessageBox QLabel {
+    color: #e8f3ff;
 }
 
 QMenuBar,
@@ -43,9 +59,22 @@ QPushButton:hover {
     background: #224666;
 }
 
-QPushButton:default {
+QPushButton:default,
+QPushButton[role="primary"] {
     background: #32a6ff;
     border-color: #32a6ff;
+    color: #032035;
+}
+
+QPushButton[role="danger"] {
+    background: #ff6b6b;
+    border-color: #ff6b6b;
+    color: #ffffff;
+}
+
+QPushButton[role="success"] {
+    background: #51cf66;
+    border-color: #51cf66;
     color: #032035;
 }
 
@@ -59,6 +88,13 @@ QTabWidget::pane {
     border: 1px solid #2b4f70;
     border-radius: 10px;
     color: #e8f3ff;
+    selection-background-color: #32a6ff;
+}
+
+QLineEdit:focus,
+QTextEdit:focus,
+QPlainTextEdit:focus {
+    border-color: #32a6ff;
 }
 
 QTabBar::tab {
@@ -75,4 +111,20 @@ QTabBar::tab:selected {
 QScrollBar::handle {
     background: #3f6f97;
     border-radius: 4px;
+}
+
+QGroupBox {
+    border: 1px solid #25405a;
+    border-radius: 8px;
+    margin-top: 12px;
+    padding-top: 16px;
+    color: #8bb3d9;
+}
+
+QSplitter::handle {
+    background: #25405a;
+}
+
+QSplitter::handle:hover {
+    background: #32a6ff;
 }

@@ -1,9 +1,3 @@
-/*
- * BEGINNER_NOTE: 这是 SerialBox 的源码文件。
- * 文件路径: src/protocol/JsonParser.cpp
- * 阅读建议: 先看文件顶部的类/函数声明，再顺着调用关系阅读。
- * 目标: 让零基础同学也能快速理解该文件在项目中的作用。
- */
 #include "SerialBox/protocol/JsonParser.h"
 #include <QJsonParseError>
 #include <QJsonObject>
@@ -15,7 +9,7 @@ JsonParser::JsonParser(QObject *parent)
 
 bool JsonParser::match(const QByteArray &buffer)
 {
-    // 简单检测：以 { 开头，找对应的 }
+    // 检测完整 JSON 对象：以 { 开头，深度匹配到 }
     int depth = 0;
     bool inString = false;
     bool escaped = false;
@@ -30,7 +24,7 @@ bool JsonParser::match(const QByteArray &buffer)
         if (c == '{') ++depth;
         else if (c == '}') {
             --depth;
-            if (depth == 0) return true;  // 找到完整 JSON 对象
+            if (depth == 0) return true;
         }
     }
     return false;
@@ -79,8 +73,25 @@ IProtocolParser::ParseResult JsonParser::parse(QByteArray &buffer)
     result.matched = true;
     result.rawFrames.append(jsonFrame);
 
-    // 转为 QVariantMap
-    result.fields = doc.object().toVariantMap();
+    // 区分 JSON-RPC 2.0 与普通 JSON
+    QJsonObject obj = doc.object();
+    if (obj.contains("jsonrpc") && obj.value("jsonrpc").toString() == "2.0") {
+        result.fields["_protocol"] = "jsonrpc2";
+        if (obj.contains("method")) {
+            // Request 或 Notification
+            result.fields["_rpcType"] = obj.contains("id") ? "request" : "notification";
+            result.fields["_rpcMethod"] = obj.value("method").toString();
+        } else if (obj.contains("result")) {
+            result.fields["_rpcType"] = "response";
+        } else if (obj.contains("error")) {
+            result.fields["_rpcType"] = "error";
+            QJsonObject errObj = obj.value("error").toObject();
+            result.fields["_rpcErrorCode"] = errObj.value("code").toInt();
+            result.fields["_rpcErrorMsg"] = errObj.value("message").toString();
+        }
+    }
+
+    result.fields.unite(obj.toVariantMap());
     result.displayText = QString(QJsonDocument(doc).toJson(QJsonDocument::Compact));
 
     return result;
@@ -89,6 +100,12 @@ IProtocolParser::ParseResult JsonParser::parse(QByteArray &buffer)
 QByteArray JsonParser::build(const QVariantMap &fields)
 {
     QJsonObject obj = QJsonObject::fromVariantMap(fields);
+    // 移除内部标记字段
+    obj.remove("_protocol");
+    obj.remove("_rpcType");
+    obj.remove("_rpcMethod");
+    obj.remove("_rpcErrorCode");
+    obj.remove("_rpcErrorMsg");
     return QJsonDocument(obj).toJson(QJsonDocument::Compact);
 }
 

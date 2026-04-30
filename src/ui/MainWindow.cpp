@@ -8,7 +8,8 @@
 #include "SerialBox/ui/SerialDialog.h"
 #include "SerialBox/ui/SerialSettings.h"
 #include "SerialBox/ui/WorkspaceModes.h"
-#include "SerialBox/ui/CommandSidebar.h"
+
+#include <QComboBox>
 
 #ifdef ENABLE_PYTHON
 #include "SerialBox/python/PythonEngine.h"
@@ -718,21 +719,21 @@ void MainWindow::setupToolBar()
     tb->addSeparator();
 
     // ── 辅助功能 —— checkable toggle ──
-    m_timestampAction = tb->addAction("时间戳");
+    m_timestampAction = tb->addAction("✓ 时间戳");
     m_timestampAction->setCheckable(true);
     m_timestampAction->setChecked(true);
     connect(m_timestampAction, &QAction::toggled, this, [this](bool on)
             {
         m_pipeline->setTimestampEnabled(on);
-        m_timestampAction->setText(on ? "时间戳" : "时间戳"); });
+        m_timestampAction->setText(on ? "✓ 时间戳" : "时间戳"); });
 
-    m_echoAction = tb->addAction("回显");
+    m_echoAction = tb->addAction("✓ 回显");
     m_echoAction->setCheckable(true);
     m_echoAction->setChecked(true);
     connect(m_echoAction, &QAction::toggled, this, [this](bool on)
             {
         m_pipeline->setEchoEnabled(on);
-        m_echoAction->setText(on ? "回显" : "回显"); });
+        m_echoAction->setText(on ? "✓ 回显" : "回显"); });
 
     m_searchToolbarAction = tb->addAction("搜索");
     m_searchToolbarAction->setCheckable(true);
@@ -768,10 +769,22 @@ void MainWindow::setupToolBar()
     m_waveToolbarAction->setChecked(false);
     connect(m_waveToolbarAction, &QAction::triggered, this, &MainWindow::toggleWaveform);
 
-    // 工作区模式
+    // 工作区模式选择器
     QWidget *spacer = new QWidget();
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     tb->addWidget(spacer);
+
+    auto *modeLabel = new QLabel("  模式: ", this);
+    tb->addWidget(modeLabel);
+
+    auto *modeCombo = new QComboBox(this);
+    modeCombo->setObjectName("workModeCombo");
+    modeCombo->addItems({"基础模式", "专家模式", "自动化模式"});
+    if (m_config) {
+        modeCombo->setCurrentIndex(static_cast<int>(m_config->workMode()));
+    }
+    connect(modeCombo, &QComboBox::currentIndexChanged, this, &MainWindow::switchWorkMode);
+    tb->addWidget(modeCombo);
 }
 
 // ═══════════════════════════════════════════
@@ -1531,7 +1544,16 @@ void MainWindow::loadSettings()
         return;
     restoreGeometry(m_config->windowGeometry());
     restoreState(m_config->windowState());
-    m_mainSplitter->setSizes({600, 200});
+
+    // 使用配置中的 splitRatio（而非硬编码）
+    double ratio = m_config->splitRatio();
+    int total = m_mainSplitter->height() > 0 ? m_mainSplitter->height() : 800;
+    int recvH = static_cast<int>(total * ratio);
+    int sendH = total - recvH;
+    m_mainSplitter->setSizes({qMax(100, recvH), qMax(60, sendH)});
+
+    // 同步 DataPipeline 显示设置
+    syncPipelineFromConfig();
 }
 
 void MainWindow::saveSettings()
@@ -1541,11 +1563,41 @@ void MainWindow::saveSettings()
     m_config->setWindowGeometry(saveGeometry());
     m_config->setWindowState(saveState());
     auto sizes = m_mainSplitter->sizes();
-    if (sizes.size() == 2 && sizes[1] > 0)
+    if (sizes.size() == 2 && sizes[0] + sizes[1] > 0)
     {
         m_config->setSplitRatio(static_cast<double>(sizes[0]) / (sizes[0] + sizes[1]));
     }
+    saveDisplaySettings();
     m_config->save();
+}
+
+void MainWindow::syncPipelineFromConfig()
+{
+    if (!m_config || !m_pipeline) return;
+    auto ds = m_config->displaySettings();
+    m_pipeline->setDisplayMode(static_cast<DataPipeline::DisplayMode>(ds.displayMode));
+    m_pipeline->setTimestampEnabled(ds.timestampEnabled);
+    m_pipeline->setAutoNewline(ds.autoNewline);
+    m_pipeline->setEchoEnabled(ds.echoEnabled);
+
+    // 同步 toolbar action 状态
+    if (m_timestampAction) m_timestampAction->setChecked(ds.timestampEnabled);
+    if (m_echoAction) m_echoAction->setChecked(ds.echoEnabled);
+    if (ds.displayMode == 1) {
+        if (m_textModeAction) m_textModeAction->setChecked(false);
+        if (m_hexModeAction) m_hexModeAction->setChecked(true);
+    }
+}
+
+void MainWindow::saveDisplaySettings()
+{
+    if (!m_config || !m_pipeline) return;
+    ConfigManager::DisplaySettings ds;
+    ds.displayMode = static_cast<int>(m_pipeline->displayMode());
+    ds.timestampEnabled = m_pipeline->timestampEnabled();
+    ds.autoNewline = m_pipeline->autoNewline();
+    ds.echoEnabled = m_pipeline->echoEnabled();
+    m_config->setDisplaySettings(ds);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

@@ -1,0 +1,33 @@
+{
+	"BUILD_DIR" : "E:/QT/SerialBox/build_new/SerialBox_autogen",
+	"CMAKE_BINARY_DIR" : "E:/QT/SerialBox/build_new",
+	"CMAKE_CURRENT_BINARY_DIR" : "E:/QT/SerialBox/build_new",
+	"CMAKE_CURRENT_SOURCE_DIR" : "E:/QT/SerialBox",
+	"CMAKE_SOURCE_DIR" : "E:/QT/SerialBox",
+	"CROSS_CONFIG" : false,
+	"GENERATOR" : "MinGW Makefiles",
+	"INCLUDE_DIR" : "E:/QT/SerialBox/build_new/SerialBox_autogen/include",
+	"INPUTS" : 
+	[
+		"E:/QT/SerialBox/resources/themes/dark.qss",
+		"E:/QT/SerialBox/resources/themes/graphite.qss",
+		"E:/QT/SerialBox/resources/themes/professional.qss",
+		"E:/QT/SerialBox/resources/themes/light.qss",
+		"E:/QT/SerialBox/resources/themes/ocean.qss",
+		"E:/QT/SerialBox/resources/docs/README_PLUGIN_DEV.md",
+		"E:/QT/SerialBox/resources/icons/connect.svg",
+		"E:/QT/SerialBox/resources/icons/disconnect.svg",
+		"E:/QT/SerialBox/resources/icons/app.svg"
+	],
+	"LOCK_FILE" : "E:/QT/SerialBox/build_new/CMakeFiles/SerialBox_autogen.dir/AutoRcc_resources_3YJK5W5UP7_Lock.lock",
+	"MULTI_CONFIG" : false,
+	"OPTIONS" : [ "--no-zstd", "-name", "resources" ],
+	"OUTPUT_CHECKSUM" : "3YJK5W5UP7",
+	"OUTPUT_NAME" : "qrc_resources.cpp",
+	"RCC_EXECUTABLE" : "C:/Qt/6.11.0/mingw_64/bin/rcc.exe",
+	"RCC_LIST_OPTIONS" : [ "--list" ],
+	"SETTINGS_FILE" : "E:/QT/SerialBox/build_new/CMakeFiles/SerialBox_autogen.dir/AutoRcc_resources_3YJK5W5UP7_Used.txt",
+	"SOURCE" : "E:/QT/SerialBox/resources/resources.qrc",
+	"USE_BETTER_GRAPH" : true,
+	"VERBOSITY" : 0
+}

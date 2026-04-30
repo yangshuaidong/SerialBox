@@ -1,9 +1,3 @@
-/*
- * BEGINNER_NOTE: 这是 SerialBox 的源码文件。
- * 文件路径: src/daemon/JsonRpcServer.cpp
- * 阅读建议: 先看文件顶部的类/函数声明，再顺着调用关系阅读。
- * 目标: 让零基础同学也能快速理解该文件在项目中的作用。
- */
 #include "SerialBox/daemon/JsonRpcServer.h"
 
 JsonRpcServer::JsonRpcServer(QObject *parent)
@@ -16,27 +10,59 @@ void JsonRpcServer::registerMethod(const QString &method, Handler handler)
     m_handlers.insert(method, std::move(handler));
 }
 
-QJsonObject JsonRpcServer::processRequest(const QJsonObject &request)
+JsonRpcServer::ProcessOutput JsonRpcServer::processMessage(const QJsonObject &msg)
 {
-    QJsonValue id = request.value("id");
-    QString method = request.value("method").toString();
-    QJsonObject params = request.value("params").toObject();
+    ProcessOutput out;
+    QString method = msg.value("method").toString();
+    bool isNotification = !msg.contains("id");
+    QJsonValue id = msg.value("id");
 
     if (method.isEmpty()) {
-        return makeError(id, -32600, "Invalid Request: missing method");
+        if (!isNotification) {
+            out.type = MessageType::Request;
+            out.response = makeError(id, ErrorCodes::InvalidRequest,
+                                     "Invalid Request: missing method");
+        }
+        return out;
     }
 
     auto it = m_handlers.constFind(method);
     if (it == m_handlers.constEnd()) {
-        return makeError(id, -32601, QString("Method not found: %1").arg(method));
+        if (!isNotification) {
+            out.type = MessageType::Request;
+            out.response = makeError(id, ErrorCodes::MethodNotFound,
+                                     QString("Method not found: %1").arg(method));
+        }
+        return out;
     }
 
+    QJsonObject params = msg.value("params").toObject();
     try {
         QJsonValue result = it.value()(params);
-        return makeResponse(id, result);
+        if (!isNotification) {
+            out.type = MessageType::Request;
+            out.response = makeResponse(id, result);
+        } else {
+            out.type = MessageType::Notification;
+        }
     } catch (const std::exception &e) {
-        return makeError(id, -32000, QString("Internal error: %1").arg(e.what()));
+        if (!isNotification) {
+            out.type = MessageType::Request;
+            out.response = makeError(id, ErrorCodes::InternalError,
+                                     QString("Internal error: %1").arg(e.what()));
+        }
     }
+    return out;
+}
+
+QJsonObject JsonRpcServer::processRequest(const QJsonObject &request)
+{
+    auto output = processMessage(request);
+    if (output.type == MessageType::Request) {
+        return output.response;
+    }
+    // Notification: 返回空对象（兼容旧调用方）
+    return {};
 }
 
 QJsonObject JsonRpcServer::makeResponse(const QJsonValue &id, const QJsonValue &result)

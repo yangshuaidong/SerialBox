@@ -7,10 +7,20 @@
     outline: none;
 }
 
-QMainWindow,
-QDialog,
-QWidget {
+QMainWindow {
     background: #0F1117;
+}
+
+QDialog {
+    background: #0F1117;
+}
+
+QMessageBox {
+    background: #0F1117;
+}
+
+QMessageBox QLabel {
+    color: #EAF0FF;
 }
 
 QMenuBar,
@@ -353,4 +363,67 @@ QLineEdit#searchInput {
     border-radius: 8px;
     color: #EAF0FF;
     padding: 6px 10px;
+}
+
+QGroupBox {
+    border: 1px solid #30415D;
+    border-radius: 8px;
+    margin-top: 12px;
+    padding-top: 16px;
+    font-weight: 600;
+    color: #AFC0DE;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 4px;
+}
+
+QComboBox::down-arrow {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #AFC0DE;
+    margin-right: 6px;
+}
+
+QComboBox::drop-down {
+    border: none;
+    width: 20px;
+}
+
+QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background: #3D5D89;
+    border-radius: 4px;
+    min-height: 30px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #5A7FAA;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+    background: transparent;
+}
+
+QScrollBar:horizontal {
+    background: transparent;
+    height: 8px;
+    margin: 0;
+}
+
+QScrollBar::handle:horizontal {
+    background: #3D5D89;
+    border-radius: 4px;
+    min-width: 30px;
 }

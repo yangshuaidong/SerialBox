@@ -1,9 +1,3 @@
-/*
- * BEGINNER_NOTE: 这是 SerialBox 的源码文件。
- * 文件路径: src/app/ConfigManager.cpp
- * 阅读建议: 先看文件顶部的类/函数声明，再顺着调用关系阅读。
- * 目标: 让零基础同学也能快速理解该文件在项目中的作用。
- */
 #include "SerialBox/app/ConfigManager.h"
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -72,9 +66,28 @@ void ConfigManager::setSplitRatio(double r)
     m_settings.setValue("ui/splitRatio", r);
 }
 
+// ── 显示设置（与 DataPipeline 对齐）──
+ConfigManager::DisplaySettings ConfigManager::displaySettings() const
+{
+    DisplaySettings s;
+    s.displayMode = m_settings.value("display/mode", 0).toInt();
+    s.timestampEnabled = m_settings.value("display/timestamp", true).toBool();
+    s.autoNewline = m_settings.value("display/autoNewline", true).toBool();
+    s.echoEnabled = m_settings.value("display/echo", true).toBool();
+    return s;
+}
+
+void ConfigManager::setDisplaySettings(const DisplaySettings &s)
+{
+    m_settings.setValue("display/mode", s.displayMode);
+    m_settings.setValue("display/timestamp", s.timestampEnabled);
+    m_settings.setValue("display/autoNewline", s.autoNewline);
+    m_settings.setValue("display/echo", s.echoEnabled);
+}
+
 QString ConfigManager::theme() const
 {
-    return m_settings.value("ui/theme", "light").toString();
+    return m_settings.value("ui/theme", "dark").toString();
 }
 
 void ConfigManager::setTheme(const QString &themeName)
@@ -125,8 +138,7 @@ QList<ConfigManager::SerialPreset> ConfigManager::savedPresets()
 {
     QList<SerialPreset> list;
     int count = m_settings.beginReadArray("presets");
-    for (int i = 0; i < count; ++i)
-    {
+    for (int i = 0; i < count; ++i) {
         m_settings.setArrayIndex(i);
         SerialPreset p;
         p.portName = m_settings.value("port").toString();
@@ -146,8 +158,7 @@ QStringList ConfigManager::presetNames()
 {
     QStringList names;
     int count = m_settings.beginReadArray("presets");
-    for (int i = 0; i < count; ++i)
-    {
+    for (int i = 0; i < count; ++i) {
         m_settings.setArrayIndex(i);
         names.append(m_settings.value("name").toString());
     }
@@ -157,16 +168,10 @@ QStringList ConfigManager::presetNames()
 
 void ConfigManager::savePreset(const QString &name, const SerialPreset &p)
 {
-    struct NamedPreset
-    {
-        QString name;
-        SerialPreset preset;
-    };
-
+    struct NamedPreset { QString name; SerialPreset preset; };
     QList<NamedPreset> items;
     const int count = m_settings.beginReadArray("presets");
-    for (int i = 0; i < count; ++i)
-    {
+    for (int i = 0; i < count; ++i) {
         m_settings.setArrayIndex(i);
         NamedPreset np;
         np.name = m_settings.value("name").toString();
@@ -182,23 +187,17 @@ void ConfigManager::savePreset(const QString &name, const SerialPreset &p)
     m_settings.endArray();
 
     bool replaced = false;
-    for (auto &it : items)
-    {
-        if (it.name.compare(name, Qt::CaseInsensitive) == 0)
-        {
+    for (auto &it : items) {
+        if (it.name.compare(name, Qt::CaseInsensitive) == 0) {
             it.preset = p;
             replaced = true;
             break;
         }
     }
-    if (!replaced)
-    {
-        items.append({name, p});
-    }
+    if (!replaced) items.append({name, p});
 
     m_settings.beginWriteArray("presets", items.size());
-    for (int i = 0; i < items.size(); ++i)
-    {
+    for (int i = 0; i < items.size(); ++i) {
         m_settings.setArrayIndex(i);
         m_settings.setValue("name", items[i].name);
         m_settings.setValue("port", items[i].preset.portName);
@@ -214,16 +213,10 @@ void ConfigManager::savePreset(const QString &name, const SerialPreset &p)
 
 void ConfigManager::deletePreset(const QString &name)
 {
-    struct NamedPreset
-    {
-        QString name;
-        SerialPreset preset;
-    };
-
+    struct NamedPreset { QString name; SerialPreset preset; };
     QList<NamedPreset> items;
     const int count = m_settings.beginReadArray("presets");
-    for (int i = 0; i < count; ++i)
-    {
+    for (int i = 0; i < count; ++i) {
         m_settings.setArrayIndex(i);
         NamedPreset np;
         np.name = m_settings.value("name").toString();
@@ -235,15 +228,12 @@ void ConfigManager::deletePreset(const QString &name)
         np.preset.flowControl = m_settings.value("flow", "None").toString();
         np.preset.timeoutMs = m_settings.value("timeout", 1000).toInt();
         if (np.name.compare(name, Qt::CaseInsensitive) != 0)
-        {
             items.append(np);
-        }
     }
     m_settings.endArray();
 
     m_settings.beginWriteArray("presets", items.size());
-    for (int i = 0; i < items.size(); ++i)
-    {
+    for (int i = 0; i < items.size(); ++i) {
         m_settings.setArrayIndex(i);
         m_settings.setValue("name", items[i].name);
         m_settings.setValue("port", items[i].preset.portName);

@@ -7,10 +7,20 @@
     outline: none;
 }
 
-QMainWindow,
-QDialog,
-QWidget {
+QMainWindow {
     background: #F4F8FF;
+}
+
+QDialog {
+    background: #F4F8FF;
+}
+
+QMessageBox {
+    background: #F4F8FF;
+}
+
+QMessageBox QLabel {
+    color: #1A1A1A;
 }
 
 QMenuBar,
@@ -446,7 +456,8 @@ QComboBox::drop-down {
 }
 
 QComboBox::down-arrow {
-    image: none;
+    width: 0;
+    height: 0;
     border-left: 4px solid transparent;
     border-right: 4px solid transparent;
     border-top: 5px solid #999999;

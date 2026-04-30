@@ -1,0 +1,9 @@
+E:/QT/SerialBox/build_new/CMakeFiles/SerialBox.dir
+E:/QT/SerialBox/build_new/CMakeFiles/edit_cache.dir
+E:/QT/SerialBox/build_new/CMakeFiles/rebuild_cache.dir
+E:/QT/SerialBox/build_new/CMakeFiles/list_install_components.dir
+E:/QT/SerialBox/build_new/CMakeFiles/install.dir
+E:/QT/SerialBox/build_new/CMakeFiles/install/local.dir
+E:/QT/SerialBox/build_new/CMakeFiles/install/strip.dir
+E:/QT/SerialBox/build_new/CMakeFiles/SerialBox_autogen_timestamp_deps.dir
+E:/QT/SerialBox/build_new/CMakeFiles/SerialBox_autogen.dir

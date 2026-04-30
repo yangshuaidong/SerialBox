@@ -2,16 +2,16 @@
    SerialBox — Catppuccin Mocha 暗色主题
    ═══════════════════════════════════════════════════ */
 
+/* 全局字体与颜色（不设背景，避免污染弹窗） */
 * {
-    background-color: #1e1e2e;
     color: #cdd6f4;
     font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
     font-size: 13px;
 }
 
-/* ── 主窗口 ── */
-QMainWindow {
-    background: #1e1e2e;
+/* ── 主窗口 / 中央控件 ── */
+QMainWindow, QWidget#centralWidget {
+    background-color: #1e1e2e;
 }
 
 QMainWindow::separator {
@@ -97,6 +97,16 @@ QToolBar::separator {
     margin: 4px 4px;
 }
 
+/* 工具栏 ComboBox（模式选择器） */
+QToolBar QComboBox#workModeCombo {
+    background: #232336;
+    border: 1px solid #3a3a55;
+    border-radius: 4px;
+    color: #cdd6f4;
+    padding: 3px 8px;
+    min-width: 90px;
+}
+
 /* ── 状态栏 ── */
 QStatusBar {
     background: #181825;
@@ -107,6 +117,25 @@ QStatusBar {
 
 QStatusBar::item {
     border: none;
+}
+
+/* ── 弹窗 ── */
+QDialog {
+    background-color: #1e1e2e;
+    border: 1px solid #3a3a55;
+    border-radius: 8px;
+}
+
+QMessageBox {
+    background-color: #1e1e2e;
+}
+
+QMessageBox QLabel {
+    color: #cdd6f4;
+}
+
+QFileDialog {
+    background-color: #1e1e2e;
 }
 
 /* ── 按钮 ── */
@@ -145,16 +174,46 @@ QPushButton#btnPrimary:hover {
     background: #8b5cf6;
 }
 
-QPushButton#btnDanger {
+QPushButton#btnDanger,
+QPushButton[role="danger"] {
     background: #f38ba8;
     border-color: #f38ba8;
     color: #1e1e2e;
 }
 
-QPushButton#btnSuccess {
+QPushButton#btnSuccess,
+QPushButton[role="success"] {
     background: #40c057;
     border-color: #40c057;
     color: #1e1e2e;
+}
+
+QPushButton[role="primary"] {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    color: white;
+}
+
+QPushButton[role="primary"]:hover {
+    background: #8b5cf6;
+}
+
+QPushButton[role="warning"] {
+    background: #f9e2af;
+    border-color: #f9e2af;
+    color: #1e1e2e;
+}
+
+QPushButton[role="info"] {
+    background: #89b4fa;
+    border-color: #89b4fa;
+    color: #1e1e2e;
+}
+
+QPushButton[active="true"] {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    color: white;
 }
 
 /* ── 输入框 ── */
@@ -164,7 +223,7 @@ QLineEdit, QTextEdit, QPlainTextEdit {
     border-radius: 6px;
     color: #cdd6f4;
     padding: 6px 10px;
-    selection-background-color: #7c3aed;
+    selection-background-color: #6D28D9;
 }
 
 QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
@@ -178,7 +237,7 @@ QLineEdit:disabled, QTextEdit:disabled {
 
 /* ── 下拉框 ── */
 QComboBox {
-    background: #1e1e2e;
+    background: #232336;
     border: 1px solid #3a3a55;
     border-radius: 4px;
     color: #cdd6f4;
@@ -196,7 +255,8 @@ QComboBox::drop-down {
 }
 
 QComboBox::down-arrow {
-    image: none;
+    width: 0;
+    height: 0;
     border-left: 4px solid transparent;
     border-right: 4px solid transparent;
     border-top: 5px solid #6c7086;
@@ -425,7 +485,7 @@ QSlider::sub-page:horizontal {
 
 /* ── SpinBox ── */
 QSpinBox, QDoubleSpinBox {
-    background: #1e1e2e;
+    background: #232336;
     border: 1px solid #3a3a55;
     border-radius: 4px;
     color: #cdd6f4;
@@ -434,4 +494,9 @@ QSpinBox, QDoubleSpinBox {
 
 QSpinBox:focus, QDoubleSpinBox:focus {
     border-color: #7c3aed;
+}
+
+/* ── 接收区搜索高亮（暗色主题） ── */
+QListWidget#receiveList {
+    background: #1e1e2e;
 }

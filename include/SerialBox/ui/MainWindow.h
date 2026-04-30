@@ -99,6 +99,8 @@ private:
     void saveSessionSnapshot();
     void loadSessionSnapshot();
     void setupPythonEngine();
+    void syncPipelineFromConfig();
+    void saveDisplaySettings();
 
     // ── 子面板 ──
     QSplitter *m_mainSplitter = nullptr;

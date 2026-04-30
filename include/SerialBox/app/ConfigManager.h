@@ -1,9 +1,3 @@
-/*
- * BEGINNER_NOTE: 这是 SerialBox 的源码文件。
- * 文件路径: include/SerialBox/app/ConfigManager.h
- * 阅读建议: 先看文件顶部的类/函数声明，再顺着调用关系阅读。
- * 目标: 让零基础同学也能快速理解该文件在项目中的作用。
- */
 #pragma once
 #include <QObject>
 #include <QSettings>
@@ -16,6 +10,7 @@
  * 管理：
  * - 串口参数预设
  * - 窗口布局
+ * - 显示设置（DataPipeline 对齐）
  * - 命令库
  * - 插件空间隔离
  * - 用户偏好
@@ -53,8 +48,18 @@ public:
     void setWindowGeometry(const QByteArray &geo);
     QByteArray windowState() const;
     void setWindowState(const QByteArray &state);
-    double splitRatio() const; // 接收/发送比例，默认 0.75
+    double splitRatio() const;
     void setSplitRatio(double ratio);
+
+    // ── 显示设置（与 DataPipeline 对齐）──
+    struct DisplaySettings {
+        int displayMode = 0;       // 0=Text, 1=Hex
+        bool timestampEnabled = true;
+        bool autoNewline = true;
+        bool echoEnabled = true;
+    };
+    DisplaySettings displaySettings() const;
+    void setDisplaySettings(const DisplaySettings &s);
 
     // ── 通用设置 ──
     bool showSerialDialogOnStart() const { return true; }
@@ -69,12 +74,7 @@ public:
     int bridgePort() const { return 9876; }
 
     // ── 工作区模式 ──
-    enum class WorkMode
-    {
-        Basic,
-        Expert,
-        Automation
-    };
+    enum class WorkMode { Basic, Expert, Automation };
     WorkMode workMode() const;
     void setWorkMode(WorkMode mode);
 

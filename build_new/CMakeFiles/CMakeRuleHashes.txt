@@ -1,0 +1,4 @@
+# Hashes of file build rules.
+f9c2e2415f2e902779ab2abd935adc5c CMakeFiles/SerialBox_autogen
+b8af39f9823ebac7bfd721347b9a74a4 SerialBox_autogen/3YJK5W5UP7/qrc_resources.cpp
+f38aac2bc1357d6474a22027d31b8911 SerialBox_autogen/timestamp

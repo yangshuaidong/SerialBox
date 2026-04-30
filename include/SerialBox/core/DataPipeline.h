@@ -1,9 +1,3 @@
-/*
- * BEGINNER_NOTE: 这是 SerialBox 的源码文件。
- * 文件路径: include/SerialBox/core/DataPipeline.h
- * 阅读建议: 先看文件顶部的类/函数声明，再顺着调用关系阅读。
- * 目标: 让零基础同学也能快速理解该文件在项目中的作用。
- */
 #pragma once
 #include <QObject>
 #include <QByteArray>
@@ -16,6 +10,9 @@
  *   串口原始数据 → [预处理钩子链] → UI/协议解析/插件
  *
  * 钩子示例：编码检测、HEX转换、协议帧提取、过滤
+ *
+ * 配置变更通过 displaySettingsChanged 信号通知 ConfigManager 持久化。
+ * 钩子拦截数据时发出 dataIntercepted 信号，避免静默丢弃。
  */
 class DataPipeline : public QObject
 {
@@ -32,11 +29,7 @@ public:
     void clearHooks();
 
     // ── 数据流 ──
-    enum class DisplayMode
-    {
-        Text,
-        Hex
-    };
+    enum class DisplayMode { Text, Hex };
     void setDisplayMode(DisplayMode mode);
     DisplayMode displayMode() const { return m_displayMode; }
 
@@ -46,7 +39,6 @@ public:
     void setAutoNewline(bool enable);
     bool autoNewline() const { return m_autoNewline; }
 
-    // ── 发送回显 ──
     void setEchoEnabled(bool enable);
     bool echoEnabled() const { return m_echoEnabled; }
 
@@ -59,9 +51,14 @@ signals:
     void dataReady(const QByteArray &processed, bool isReceive, const QDateTime &timestamp);
     void displayModeChanged(DisplayMode mode);
 
+    // 钩子拦截数据时发出（避免静默丢弃）
+    void dataIntercepted(const QByteArray &intercepted, const QString &hookName);
+
+    // 任一显示配置变更时发出，供 ConfigManager 持久化
+    void displaySettingsChanged();
+
 private:
-    struct HookEntry
-    {
+    struct HookEntry {
         QString name;
         Hook hook;
         int priority;

@@ -1,9 +1,3 @@
-/*
- * BEGINNER_NOTE: 这是 SerialBox 的源码文件。
- * 文件路径: src/protocol/CustomFrameParser.cpp
- * 阅读建议: 先看文件顶部的类/函数声明，再顺着调用关系阅读。
- * 目标: 让零基础同学也能快速理解该文件在项目中的作用。
- */
 #include "SerialBox/protocol/CustomFrameParser.h"
 
 CustomFrameParser::CustomFrameParser(QObject *parent)
@@ -18,9 +12,29 @@ void CustomFrameParser::setLengthOffset(int offset, int size) {
 }
 void CustomFrameParser::setCrcEnabled(bool enable) { m_crcEnabled = enable; }
 
+/**
+ * CRC-16/CCITT (poly=0x1021, init=0xFFFF)
+ * 替换原先的简单累加校验，提供工业级检错能力
+ */
+static quint16 crc16ccitt(const QByteArray &data)
+{
+    quint16 crc = 0xFFFF;
+    for (auto byte : data) {
+        crc ^= static_cast<quint8>(byte) << 8;
+        for (int i = 0; i < 8; ++i) {
+            if (crc & 0x8000)
+                crc = (crc << 1) ^ 0x1021;
+            else
+                crc <<= 1;
+        }
+    }
+    return crc;
+}
+
 bool CustomFrameParser::match(const QByteArray &buffer)
 {
-    if (buffer.size() < m_frameHeader.size() + m_lengthOffset + m_lengthSize) return false;
+    int minLen = m_frameHeader.size() + m_lengthOffset + m_lengthSize;
+    if (buffer.size() < minLen) return false;
     if (!buffer.startsWith(m_frameHeader)) return false;
 
     // 读取长度字段
@@ -31,7 +45,18 @@ bool CustomFrameParser::match(const QByteArray &buffer)
 
     int totalLen = m_frameHeader.size() + m_lengthOffset + m_lengthSize + payloadLen
                  + (m_crcEnabled ? 2 : 0);
-    return buffer.size() >= totalLen;
+    if (buffer.size() < totalLen) return false;
+
+    // ★ CRC 校验
+    if (m_crcEnabled) {
+        QByteArray framePart = buffer.left(totalLen - 2);
+        quint16 calcCrc = crc16ccitt(framePart);
+        quint16 recvCrc = static_cast<quint8>(buffer[totalLen - 2]) << 8
+                        | static_cast<quint8>(buffer[totalLen - 1]);
+        return calcCrc == recvCrc;
+    }
+
+    return true;
 }
 
 IProtocolParser::ParseResult CustomFrameParser::parse(QByteArray &buffer)
@@ -60,10 +85,18 @@ IProtocolParser::ParseResult CustomFrameParser::parse(QByteArray &buffer)
     result.fields["payload"] = QString(payload.toHex(' ').toUpper());
     result.fields["displayPayload"] = payload;
 
-    result.displayText = QString("[自定义帧] 头:%1 长:%2 数据:%3")
+    if (m_crcEnabled) {
+        quint16 calcCrc = crc16ccitt(frame.left(totalLen - 2));
+        quint16 recvCrc = static_cast<quint8>(frame[totalLen - 2]) << 8
+                        | static_cast<quint8>(frame[totalLen - 1]);
+        result.fields["crcOk"] = (calcCrc == recvCrc);
+    }
+
+    result.displayText = QString("[自定义帧] 头:%1 长:%2 数据:%3%4")
         .arg(result.fields["header"].toString())
         .arg(payloadLen)
-        .arg(result.fields["payload"].toString());
+        .arg(result.fields["payload"].toString())
+        .arg(m_crcEnabled ? (result.fields.value("crcOk").toBool() ? " CRC:✓" : " CRC:✗") : "");
 
     buffer.remove(0, totalLen);
     return result;
@@ -83,9 +116,7 @@ QByteArray CustomFrameParser::build(const QVariantMap &fields)
     frame.append(payload);
 
     if (m_crcEnabled) {
-        // 简单 CRC16
-        quint16 crc = 0;
-        for (auto b : frame) crc += static_cast<quint8>(b);
+        quint16 crc = crc16ccitt(frame);
         frame.append(static_cast<char>(crc >> 8));
         frame.append(static_cast<char>(crc & 0xFF));
     }
